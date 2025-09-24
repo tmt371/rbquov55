@@ -1,0 +1,84 @@
+/* File: 04-core-code/ui/css/dialog.css */
+
+/* --- Dialog Component Styles --- */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 1;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.dialog-overlay.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.dialog-box {
+    background-color: white;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+}
+
+.dialog-message {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    line-height: 1.5;
+    color: #333;
+}
+
+.dialog-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.dialog-button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.dialog-button:first-of-type {
+    background-color: #28a745;
+    color: white;
+}
+
+.dialog-button:first-of-type:hover {
+    background-color: #218838;
+}
+
+.dialog-button:nth-of-type(2) {
+    background-color: #007bff;
+    color: white;
+}
+
+.dialog-button:nth-of-type(2):hover {
+    background-color: #0069d9;
+}
+
+.dialog-button.secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.dialog-button.secondary:hover {
+    background-color: #5a6268;
+}
