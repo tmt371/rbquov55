@@ -113,15 +113,18 @@ export class TableComponent {
     _createCellRenderers() {
         return {
             sequence: (cell, item, index, state) => {
-                const { selectedRowIndex, isMultiDeleteMode, multiDeleteSelectedIndexes, lfSelectedRowIndexes } = state.ui;
+                // [REFACTORED] Updated to use new generic state names
+                const { selectedRowIndex, isMultiSelectMode, multiSelectSelectedIndexes, lfSelectedRowIndexes } = state.ui;
                 cell.textContent = index + 1;
                 const isLastRowEmpty = (index === state.quoteData.rollerBlindItems.length - 1) && (!item.width && !item.height);
                 
                 if (lfSelectedRowIndexes.has(index)) {
                     cell.classList.add('lf-selection-highlight');
-                } else if (isMultiDeleteMode) {
+                // [REFACTORED] Updated to check new 'isMultiSelectMode' state
+                } else if (isMultiSelectMode) {
                     if (isLastRowEmpty) cell.classList.add('selection-disabled');
-                    else if (multiDeleteSelectedIndexes.has(index)) cell.classList.add('multi-selected-row');
+                    // [REFACTORED] Updated to read from new 'multiSelectSelectedIndexes' state
+                    else if (multiSelectSelectedIndexes.has(index)) cell.classList.add('multi-selected-row');
                 } else if (index === selectedRowIndex) {
                     cell.classList.add('selected-row-highlight');
                 }
@@ -140,13 +143,9 @@ export class TableComponent {
                 const { activeCell } = state.ui;
                 cell.textContent = (item.width || item.height) ? (item.fabricType || '') : '';
                 
-                // [REFACTORED] Extended to add classes for new fabric types
                 const typeClassMap = {
-                    'B2': 'type-b2',
-                    'B3': 'type-b3',
-                    'B4': 'type-b4',
-                    'B5': 'type-b5',
-                    'SN': 'type-sn'
+                    'B2': 'type-b2', 'B3': 'type-b3', 'B4': 'type-b4',
+                    'B5': 'type-b5', 'SN': 'type-sn'
                 };
                 if (typeClassMap[item.fabricType]) {
                     cell.classList.add(typeClassMap[item.fabricType]);
@@ -161,13 +160,9 @@ export class TableComponent {
             fabricTypeDisplay: (cell, item) => {
                 cell.textContent = item.fabricType || '';
 
-                // [REFACTORED] Extended to add classes for new fabric types
                 const typeClassMap = {
-                    'B2': 'type-b2',
-                    'B3': 'type-b3',
-                    'B4': 'type-b4',
-                    'B5': 'type-b5',
-                    'SN': 'type-sn'
+                    'B2': 'type-b2', 'B3': 'type-b3', 'B4': 'type-b4',
+                    'B5': 'type-b5', 'SN': 'type-sn'
                 };
                 if (typeClassMap[item.fabricType]) {
                     cell.classList.add(typeClassMap[item.fabricType]);

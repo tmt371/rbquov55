@@ -6,12 +6,11 @@
  */
 export class UIService {
     constructor(initialUIState) {
-        // Use a deep copy to ensure the service has its own state object.
         this.state = JSON.parse(JSON.stringify(initialUIState));
         
-        // Initialize states not present in the initial config
-        this.state.isMultiDeleteMode = false;
-        this.state.multiDeleteSelectedIndexes = new Set();
+        // [REFACTORED] Renamed from isMultiDeleteMode to isMultiSelectMode
+        this.state.isMultiSelectMode = false;
+        this.state.multiSelectSelectedIndexes = new Set();
         this.state.locationInputValue = '';
         this.state.targetCell = null;
         this.state.activeEditMode = null;
@@ -19,20 +18,16 @@ export class UIService {
         this.state.lfSelectedRowIndexes = new Set();
         this.state.lfModifiedRowIndexes = new Set();
 
-        // [REFACTORED] Renamed k4... state variables to reflect their 'Dual/Chain' functionality
-        this.state.dualChainMode = null; // 'dual', or 'chain'
+        this.state.dualChainMode = null;
         this.state.dualChainInputValue = '';
         this.state.dualPrice = null;
 
-        // [REFACTORED] Renamed k5... initialization to reflect its 'Drive/Accessory' functionality
         this._initializeDriveAccessoryState();
         
         console.log("UIService Initialized.");
     }
 
-    // [REFACTORED] Renamed method from _initializeK5State
     _initializeDriveAccessoryState() {
-        // [REFACTORED] Renamed all k5... state variables
         this.state.driveAccessoryMode = null;
         this.state.driveRemoteCount = 0;
         this.state.driveChargerCount = 0;
@@ -58,8 +53,9 @@ export class UIService {
 
     reset(initialUIState) {
         this.state = JSON.parse(JSON.stringify(initialUIState));
-        this.state.isMultiDeleteMode = false;
-        this.state.multiDeleteSelectedIndexes = new Set();
+        // [REFACTORED] Renamed state variables
+        this.state.isMultiSelectMode = false;
+        this.state.multiSelectSelectedIndexes = new Set();
         this.state.locationInputValue = '';
         this.state.targetCell = null;
         this.state.activeEditMode = null;
@@ -67,7 +63,6 @@ export class UIService {
         this.state.lfSelectedRowIndexes = new Set();
         this.state.lfModifiedRowIndexes = new Set();
 
-        // [REFACTORED] Reset renamed state variables
         this.state.dualChainMode = null;
         this.state.dualChainInputValue = '';
         this.state.dualPrice = null;
@@ -104,15 +99,14 @@ export class UIService {
         this.state.selectedRowIndex = null;
     }
 
-
-
-    toggleMultiDeleteMode() {
-        const isEnteringMode = !this.state.isMultiDeleteMode;
-        this.state.isMultiDeleteMode = isEnteringMode;
-        this.state.multiDeleteSelectedIndexes.clear();
+    // [REFACTORED] Renamed method and logic to be generic
+    toggleMultiSelectMode() {
+        const isEnteringMode = !this.state.isMultiSelectMode;
+        this.state.isMultiSelectMode = isEnteringMode;
+        this.state.multiSelectSelectedIndexes.clear();
 
         if (isEnteringMode && this.state.selectedRowIndex !== null) {
-            this.state.multiDeleteSelectedIndexes.add(this.state.selectedRowIndex);
+            this.state.multiSelectSelectedIndexes.add(this.state.selectedRowIndex);
         }
         
         this.clearRowSelection();
@@ -120,11 +114,12 @@ export class UIService {
         return isEnteringMode;
     }
     
-    toggleMultiDeleteSelection(rowIndex) {
-        if (this.state.multiDeleteSelectedIndexes.has(rowIndex)) {
-            this.state.multiDeleteSelectedIndexes.delete(rowIndex);
+    // [REFACTORED] Renamed method to be generic
+    toggleMultiSelectSelection(rowIndex) {
+        if (this.state.multiSelectSelectedIndexes.has(rowIndex)) {
+            this.state.multiSelectSelectedIndexes.delete(rowIndex);
         } else {
-            this.state.multiDeleteSelectedIndexes.add(rowIndex);
+            this.state.multiSelectSelectedIndexes.add(rowIndex);
         }
     }
 
@@ -148,7 +143,7 @@ export class UIService {
         this.state.locationInputValue = value;
     }
 
-    setTargetCell(cell) { // cell should be { rowIndex, column } or null
+    setTargetCell(cell) {
         this.state.targetCell = cell;
     }
 
@@ -184,7 +179,6 @@ export class UIService {
         return this.state.lfModifiedRowIndexes.size > 0;
     }
 
-    // --- [REFACTORED] Dual/Chain Mode State Management ---
     setDualChainMode(mode) {
         this.state.dualChainMode = mode;
     }
@@ -201,7 +195,6 @@ export class UIService {
         this.state.dualPrice = price;
     }
 
-    // --- [REFACTORED] Drive & Accessories State Management ---
     setDriveAccessoryMode(mode) {
         this.state.driveAccessoryMode = mode;
     }

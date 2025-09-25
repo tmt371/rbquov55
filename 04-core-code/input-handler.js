@@ -108,7 +108,9 @@ export class InputHandler {
         setupButton('key-save', 'userRequestedSave');
         setupButton('key-export', 'userRequestedExportCSV');
         setupButton('key-reset', 'userRequestedReset');
-        setupButton('key-f5', 'userRequestedMultiDeleteMode');
+        
+        // [REFACTORED] Updated to target the new button ID and publish a generic event name
+        setupButton('key-m-sel', 'userToggledMultiSelectMode');
 
         const loadButton = document.getElementById('key-load');
         if (loadButton) {
@@ -118,12 +120,10 @@ export class InputHandler {
         }
     }
     
-    // [REFACTORED] Updated to handle both simple clicks and long-press events
     _setupNumericKeyboard() {
         const keyboard = document.getElementById('numeric-keyboard');
         if (!keyboard) return;
 
-        // Generic long-press handler for a button
         const addLongPressSupport = (button, longPressEventName, clickEventName, data = {}) => {
             const startPress = (e) => {
                 e.preventDefault();
@@ -151,7 +151,6 @@ export class InputHandler {
         const addButtonListener = (id, eventName, data = {}) => {
             const button = document.getElementById(id);
             if(button) {
-                // Special handling for the Type button
                 if (id === 'key-type') {
                     addLongPressSupport(button, 'typeButtonLongPressed', 'userRequestedCycleType', data);
                 } else {
@@ -176,12 +175,11 @@ export class InputHandler {
         addButtonListener('key-enter', 'numericKeyPressed', { key: 'ENT' });
         addButtonListener('key-w', 'numericKeyPressed', { key: 'W' });
         addButtonListener('key-h', 'numericKeyPressed', { key: 'H' });
-        addButtonListener('key-type', 'userRequestedCycleType'); // The click part is handled in addLongPressSupport
+        addButtonListener('key-type', 'userRequestedCycleType');
         addButtonListener('key-clear', 'userRequestedClearRow');
         addButtonListener('key-price', 'userRequestedCalculateAndSum');
     }
 
-    // [REFACTORED] Updated to handle both simple clicks and long-press events
     _setupTableInteraction() {
         const table = document.getElementById('results-table');
         if (table) {
@@ -208,7 +206,7 @@ export class InputHandler {
             table.addEventListener('touchend', endPress);
 
             table.addEventListener('click', (event) => {
-                if(this.isLongPress) return; // Don't fire click if a long press just happened
+                if(this.isLongPress) return;
 
                 const target = event.target;
                 if (target.tagName === 'TD') {

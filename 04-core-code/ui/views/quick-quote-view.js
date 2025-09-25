@@ -17,8 +17,10 @@ export class QuickQuoteView {
         this.currentProduct = 'rollerBlind';
     }
 
-    handleToggleMultiDeleteMode() {
-        const isEnteringMode = this.uiService.toggleMultiDeleteMode();
+    // [REFACTORED] Renamed method to be generic
+    handleToggleMultiSelectMode() {
+        // [REFACTORED] Updated to call the new generic method
+        const isEnteringMode = this.uiService.toggleMultiSelectMode();
         if (!isEnteringMode) {
             this.focusService.focusFirstEmptyCell('width');
         }
@@ -26,7 +28,8 @@ export class QuickQuoteView {
     }
 
     handleSequenceCellClick({ rowIndex }) {
-        if (this.uiService.getState().isMultiDeleteMode) {
+        // [REFACTORED] Updated to check the new 'isMultiSelectMode' state
+        if (this.uiService.getState().isMultiSelectMode) {
             const items = this.quoteService.getItems();
             const item = items[rowIndex];
             const isLastRowEmpty = (rowIndex === items.length - 1) && (!item.width && !item.height);
@@ -35,7 +38,8 @@ export class QuickQuoteView {
                 this.eventAggregator.publish('showNotification', { message: "Cannot select the final empty row.", type: 'error' });
                 return;
             }
-            this.uiService.toggleMultiDeleteSelection(rowIndex);
+            // [REFACTORED] Updated to call the new generic method
+            this.uiService.toggleMultiSelectSelection(rowIndex);
         } else {
             this.uiService.toggleRowSelection(rowIndex);
         }
@@ -43,14 +47,16 @@ export class QuickQuoteView {
     }
 
     handleDeleteRow() {
-        const { isMultiDeleteMode, multiDeleteSelectedIndexes, selectedRowIndex } = this.uiService.getState();
-        if (isMultiDeleteMode) {
-            if (multiDeleteSelectedIndexes.size === 0) {
+        // [REFACTORED] Updated to use the new generic state names
+        const { isMultiSelectMode, multiSelectSelectedIndexes, selectedRowIndex } = this.uiService.getState();
+        if (isMultiSelectMode) {
+            if (multiSelectSelectedIndexes.size === 0) {
                 this.eventAggregator.publish('showNotification', { message: 'Please select rows to delete.' });
                 return;
             }
-            this.quoteService.deleteMultipleRows(multiDeleteSelectedIndexes);
-            this.uiService.toggleMultiDeleteMode();
+            this.quoteService.deleteMultipleRows(multiSelectSelectedIndexes);
+            // [REFACTORED] Updated to call the new generic method
+            this.uiService.toggleMultiSelectMode();
             this.focusService.focusFirstEmptyCell('width');
         } else {
             if (selectedRowIndex === null) return;
@@ -179,14 +185,13 @@ export class QuickQuoteView {
     }
     
     handleCycleType() {
-        const changed = this.quoteService.batchUpdateFabricType(null); // Passing null will cycle to next
+        const changed = this.quoteService.batchUpdateFabricType(null);
         if (changed) {
             this.uiService.setSumOutdated(true);
             this.publish();
         }
     }
 
-    // [NEW] Central logic to show the fabric type selection dialog
     _showFabricTypeDialog(callback) {
         const fabricTypes = this.configManager.getFabricTypeSequence();
         if (fabricTypes.length === 0) return;
@@ -208,7 +213,6 @@ export class QuickQuoteView {
         });
     }
 
-    // [NEW] Handler for long-pressing a single TYPE cell
     handleTypeCellLongPress({ rowIndex }) {
         const item = this.quoteService.getItems()[rowIndex];
         if (!item || (!item.width && !item.height)) {
@@ -220,7 +224,6 @@ export class QuickQuoteView {
         });
     }
 
-    // [NEW] Handler for long-pressing the main Type button on the virtual keyboard
     handleTypeButtonLongPress() {
         this._showFabricTypeDialog((newType) => {
             return this.quoteService.batchUpdateFabricType(newType);

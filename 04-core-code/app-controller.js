@@ -41,12 +41,12 @@ export class AppController {
         this.eventAggregator.subscribe('userMovedActiveCell', (data) => delegate('handleMoveActiveCell', data));
         this.eventAggregator.subscribe('userRequestedCycleType', () => delegate('handleCycleType'));
         this.eventAggregator.subscribe('userRequestedCalculateAndSum', () => delegate('handleCalculateAndSum'));
-        this.eventAggregator.subscribe('userRequestedMultiDeleteMode', () => delegate('handleToggleMultiDeleteMode'));
         this.eventAggregator.subscribe('userChoseSaveThenLoad', () => delegate('handleSaveThenLoad'));
-
-        // [NEW] Add subscriptions for the new long-press events
         this.eventAggregator.subscribe('typeCellLongPressed', (data) => delegate('handleTypeCellLongPress', data));
         this.eventAggregator.subscribe('typeButtonLongPressed', (data) => delegate('handleTypeButtonLongPress', data));
+
+        // [REFACTORED] Updated to subscribe to the new generic event name
+        this.eventAggregator.subscribe('userToggledMultiSelectMode', () => delegate('handleToggleMultiSelectMode'));
     }
 
     _subscribeDetailViewEvents() {
