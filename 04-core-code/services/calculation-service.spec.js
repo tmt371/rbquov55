@@ -16,7 +16,17 @@ const mockProductStrategy = {
 };
 
 const mockConfigManager = {
-    getPriceMatrix: jest.fn(() => ({}))
+    getPriceMatrix: jest.fn((fabricType) => {
+        // [REFACTORED] Updated mock to handle aliases for testing purposes
+        if (fabricType === 'B5') {
+            return { name: 'SHAW - VIBE', aliasFor: 'SN' };
+        }
+        return {}; // Return a dummy matrix for other types
+    }),
+    getAccessoryPrice: jest.fn((key) => {
+        const prices = { comboBracket: 10, winderHD: 30 };
+        return prices[key] || 0;
+    })
 };
 
 // --- Test Suite ---
@@ -25,7 +35,7 @@ describe('CalculationService (Refactored)', () => {
 
     beforeEach(() => {
         calculationService = new CalculationService({
-            productFactory: null,
+            productFactory: { getProductStrategy: () => mockProductStrategy },
             configManager: mockConfigManager
         });
         
@@ -34,7 +44,7 @@ describe('CalculationService (Refactored)', () => {
     });
 
     it('should correctly calculate and sum prices for valid items using the product strategy', () => {
-        // [REFACTORED] Updated mock data to use new fabric type names 'B1', 'B2'
+        // [REFACTORED] Updated mock data to use a new valid fabric type name 'B1'
         const quoteData = {
             rollerBlindItems: [
                 { width: 1000, height: 1000, fabricType: 'B1', linePrice: null },
@@ -61,12 +71,12 @@ describe('CalculationService (Refactored)', () => {
     });
 
     it('should return the first error encountered and still sum valid items', () => {
-        // [REFACTORED] Updated mock data to use new fabric type name 'B1'
+        // [REFACTORED] Updated mock data to use a new valid fabric type name 'B3'
         const quoteData = {
             rollerBlindItems: [
-                { width: 1000, height: 1000, fabricType: 'B1', linePrice: null },
-                { width: 4000, height: 1500, fabricType: 'B1', linePrice: null }, 
-                { width: 2000, height: 2000, fabricType: 'B1', linePrice: null }
+                { width: 1000, height: 1000, fabricType: 'B3', linePrice: null },
+                { width: 4000, height: 1500, fabricType: 'B3', linePrice: null }, 
+                { width: 2000, height: 2000, fabricType: 'B3', linePrice: null }
             ],
             summary: { totalSum: 0, accessories: {} }
         };
@@ -80,5 +90,21 @@ describe('CalculationService (Refactored)', () => {
         expect(firstError).not.toBeNull();
         expect(firstError.rowIndex).toBe(1);
         expect(firstError.message).toContain('Width exceeds maximum.');
+    });
+
+    // [NEW] Test to ensure the new generic accessory calculation bridge method works
+    it('should correctly call the strategy for accessory pricing', () => {
+        const productType = 'rollerBlind';
+        const items = [{ dual: 'D' }, { dual: 'D' }];
+        
+        // Mock the strategy's method for this specific test
+        mockProductStrategy.calculateDualPrice = jest.fn(() => 10);
+
+        const price = calculationService.calculateAccessoryPrice(productType, 'dual', { items });
+
+        expect(price).toBe(10);
+        // Verify that the service correctly looked up the price and called the strategy's method
+        expect(mockConfigManager.getAccessoryPrice).toHaveBeenCalledWith('comboBracket');
+        expect(mockProductStrategy.calculateDualPrice).toHaveBeenCalledWith(items, 10);
     });
 });

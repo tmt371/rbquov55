@@ -5,7 +5,6 @@ export class ConfigManager {
         this.eventAggregator = eventAggregator;
         this.priceMatrices = null;
         this.accessories = null;
-        // [NEW] Add a property to store the fabric type sequence
         this.fabricTypeSequence = null; 
         this.isInitialized = false;
     }
@@ -22,7 +21,6 @@ export class ConfigManager {
             const data = await response.json();
             this.priceMatrices = data.matrices;
             this.accessories = data.accessories;
-            // [NEW] Load and store the fabric type sequence, with a fallback
             this.fabricTypeSequence = data.fabricTypeSequence || [];
             this.isInitialized = true;
             console.log("ConfigManager initialized and price matrices loaded successfully.");
@@ -34,8 +32,8 @@ export class ConfigManager {
     }
 
     /**
-     * Retrieves the price matrix for a given fabric type.
-     * @param {string} fabricType - e.g., 'BO', 'BO1', 'SN'
+     * [REFACTORED] Retrieves the price matrix for a given fabric type, handling aliases.
+     * @param {string} fabricType - e.g., 'B1', 'B5', 'SN'
      * @returns {object|null}
      */
     getPriceMatrix(fabricType) {
@@ -43,7 +41,22 @@ export class ConfigManager {
             console.error("ConfigManager not initialized or matrices not loaded.");
             return null;
         }
-        return this.priceMatrices[fabricType] || null;
+        
+        const matrix = this.priceMatrices[fabricType];
+
+        // [NEW] Handle the alias logic
+        if (matrix && matrix.aliasFor) {
+            const aliasTargetMatrix = this.priceMatrices[matrix.aliasFor];
+            if (aliasTargetMatrix) {
+                // Return the target matrix but keep the original name for reference
+                return { ...aliasTargetMatrix, name: matrix.name };
+            } else {
+                console.error(`Alias target '${matrix.aliasFor}' not found for fabric type '${fabricType}'.`);
+                return null;
+            }
+        }
+        
+        return matrix || null;
     }
 
     /**
@@ -65,7 +78,7 @@ export class ConfigManager {
     }
 
     /**
-     * [NEW] Retrieves the fabric type sequence array.
+     * Retrieves the fabric type sequence array.
      * @returns {Array<string>} The sequence of fabric types.
      */
     getFabricTypeSequence() {

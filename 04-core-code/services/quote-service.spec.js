@@ -5,9 +5,7 @@ import { QuoteService } from './quote-service.js';
 // --- Mock Dependencies ---
 const getMockInitialItem = () => ({
     itemId: 'item-1',
-    // Phase 1
     width: null, height: null, fabricType: null, linePrice: null,
-    // Phase 2
     location: '', fabric: '', color: '', over: '',
     oi: '', lr: '', sd: '', chain: null, winder: '', motor: ''
 });
@@ -20,9 +18,9 @@ const mockProductFactory = {
     getProductStrategy: () => mockProductStrategy
 };
 
-// [REFACTORED] Updated the mock config manager to provide the new type sequence for testing
+// [REFACTORED] Updated the mock config manager to provide the new, full type sequence for testing
 const mockConfigManager = {
-    getFabricTypeSequence: () => ['B1', 'B2', 'SN']
+    getFabricTypeSequence: () => ['B1', 'B2', 'B3', 'B4', 'B5', 'SN']
 };
 
 const getMockInitialState = () => ({
@@ -43,7 +41,7 @@ describe('QuoteService', () => {
         quoteService = new QuoteService({
             initialState: getMockInitialState(),
             productFactory: mockProductFactory,
-            configManager: mockConfigManager // Provide the mock config manager
+            configManager: mockConfigManager
         });
     });
 
@@ -99,25 +97,34 @@ describe('QuoteService', () => {
         expect(items).toHaveLength(2);
     });
 
-    // [REFACTORED] Test for cycleItemType now uses the mockConfigManager
-    it('should cycle through fabric types based on the sequence from configManager', () => {
+    // [REFACTORED] Expanded test for cycleItemType to cover the full new sequence
+    it('should cycle through all fabric types based on the sequence from configManager', () => {
         quoteService.updateItemValue(0, 'width', 1000);
         quoteService.updateItemValue(0, 'height', 1000);
+        const item = quoteService.getItems()[0];
         
-        // Initial state is null, first cycle should be B1
-        quoteService.cycleItemType(0);
-        expect(quoteService.getItems()[0].fabricType).toBe('B1');
+        expect(item.fabricType).toBeNull();
 
-        // Second cycle should be B2
         quoteService.cycleItemType(0);
-        expect(quoteService.getItems()[0].fabricType).toBe('B2');
+        expect(item.fabricType).toBe('B1');
 
-        // Third cycle should be SN
         quoteService.cycleItemType(0);
-        expect(quoteService.getItems()[0].fabricType).toBe('SN');
+        expect(item.fabricType).toBe('B2');
 
-        // Fourth cycle should loop back to B1
         quoteService.cycleItemType(0);
-        expect(quoteService.getItems()[0].fabricType).toBe('B1');
+        expect(item.fabricType).toBe('B3');
+
+        quoteService.cycleItemType(0);
+        expect(item.fabricType).toBe('B4');
+
+        quoteService.cycleItemType(0);
+        expect(item.fabricType).toBe('B5');
+
+        quoteService.cycleItemType(0);
+        expect(item.fabricType).toBe('SN');
+
+        // Seventh cycle should loop back to B1
+        quoteService.cycleItemType(0);
+        expect(item.fabricType).toBe('B1');
     });
 });

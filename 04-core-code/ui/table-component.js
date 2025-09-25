@@ -97,7 +97,6 @@ export class TableComponent {
     _renderCellContent(cell, key, item, index, state) {
         const { targetCell, lfModifiedRowIndexes } = state.ui;
 
-        // Common logic for all cells
         if (targetCell && index === targetCell.rowIndex && key === targetCell.column) {
             cell.classList.add('target-cell');
         }
@@ -105,7 +104,6 @@ export class TableComponent {
             cell.classList.add('is-lf-modified');
         }
 
-        // Delegate to the specific renderer function
         const renderer = this.cellRenderers[key] || this.cellRenderers.default;
         if (renderer) {
             renderer(cell, item, index, state);
@@ -141,9 +139,19 @@ export class TableComponent {
             TYPE: (cell, item, index, state) => {
                 const { activeCell } = state.ui;
                 cell.textContent = (item.width || item.height) ? (item.fabricType || '') : '';
-                // [REFACTORED] Updated check from 'BO1' to 'B2' and class name from 'type-bo1' to 'type-b2'
-                if (item.fabricType === 'B2') cell.classList.add('type-b2');
-                else if (item.fabricType === 'SN') cell.classList.add('type-sn');
+                
+                // [REFACTORED] Extended to add classes for new fabric types
+                const typeClassMap = {
+                    'B2': 'type-b2',
+                    'B3': 'type-b3',
+                    'B4': 'type-b4',
+                    'B5': 'type-b5',
+                    'SN': 'type-sn'
+                };
+                if (typeClassMap[item.fabricType]) {
+                    cell.classList.add(typeClassMap[item.fabricType]);
+                }
+
                 if (activeCell && index === activeCell.rowIndex && activeCell.column === 'TYPE') cell.classList.add('active-input-cell');
             },
             Price: (cell, item) => {
@@ -152,9 +160,18 @@ export class TableComponent {
             },
             fabricTypeDisplay: (cell, item) => {
                 cell.textContent = item.fabricType || '';
-                // [REFACTORED] Updated check from 'BO1' to 'B2' and class name from 'type-bo1' to 'type-b2'
-                if (item.fabricType === 'B2') cell.classList.add('type-b2');
-                else if (item.fabricType === 'SN') cell.classList.add('type-sn');
+
+                // [REFACTORED] Extended to add classes for new fabric types
+                const typeClassMap = {
+                    'B2': 'type-b2',
+                    'B3': 'type-b3',
+                    'B4': 'type-b4',
+                    'B5': 'type-b5',
+                    'SN': 'type-sn'
+                };
+                if (typeClassMap[item.fabricType]) {
+                    cell.classList.add(typeClassMap[item.fabricType]);
+                }
             },
             dual: (cell, item) => {
                 cell.textContent = item.dual || '';
@@ -168,7 +185,6 @@ export class TableComponent {
                 cell.textContent = item.motor || '';
                 cell.classList.toggle('motor-cell-active', !!item.motor);
             },
-            // Default renderer for simple text properties
             default: (cell, item, index, state) => {
                 const columnKey = cell.dataset.column;
                 cell.textContent = item[columnKey] || '';
