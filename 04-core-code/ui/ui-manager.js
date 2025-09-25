@@ -5,14 +5,13 @@ import { SummaryComponent } from './summary-component.js';
 import { PanelComponent } from './panel-component.js';
 import { NotificationComponent } from './notification-component.js';
 import { DialogComponent } from './dialog-component.js';
-import { LeftPanelComponent } from './left-panel-component.js'; // [REFACTOR] Import the new component
+import { LeftPanelComponent } from './left-panel-component.js';
 
 export class UIManager {
     constructor(appElement, eventAggregator) {
         this.appElement = appElement;
         this.eventAggregator = eventAggregator;
 
-        // --- DOM 元素引用 (已簡化) ---
         this.numericKeyboardPanel = document.getElementById('numeric-keyboard-panel');
         this.insertButton = document.getElementById('key-insert');
         this.deleteButton = document.getElementById('key-delete');
@@ -20,14 +19,15 @@ export class UIManager {
         this.clearButton = document.getElementById('key-clear');
         this.leftPanelElement = document.getElementById('left-panel');
         
-        // --- 實例化所有子元件 ---
+        // [BUG FIX] Add a property to cache the calculated height of the left panel
+        this.cachedLeftPanelHeight = 0;
+
         const tableElement = document.getElementById('results-table');
         this.tableComponent = new TableComponent(tableElement);
 
         const summaryElement = document.getElementById('total-sum-value');
         this.summaryComponent = new SummaryComponent(summaryElement);
 
-        // [REFACTOR] Instantiate the new LeftPanelComponent
         this.leftPanelComponent = new LeftPanelComponent(this.leftPanelElement);
 
         this.functionPanel = new PanelComponent({
@@ -60,46 +60,67 @@ export class UIManager {
         const isDetailView = state.ui.currentView === 'DETAIL_CONFIG';
         this.appElement.classList.toggle('detail-view-active', isDetailView);
 
-        // --- Delegate rendering to specialized components ---
         this.tableComponent.render(state);
         this.summaryComponent.render(state.quoteData.summary, state.ui.isSumOutdated);
-        this.leftPanelComponent.render(state.ui, state.quoteData); // [REFACTOR] Delegate left panel rendering
+        this.leftPanelComponent.render(state.ui, state.quoteData);
         
         this._updateButtonStates(state);
         this._updateLeftPanelState(state.ui.currentView);
         this._scrollToActiveCell(state);
     }
 
-    // [REFACTOR] _updateTabStates and _updatePanelButtonStates have been moved to LeftPanelComponent
-
+    // [BUG FIX] Refactored this method to be independent of the numeric keyboard's collapsed state.
     _adjustLeftPanelLayout() {
         const appContainer = this.appElement;
         const numericKeyboard = this.numericKeyboardPanel;
-        const key7 = document.getElementById('key-7');
         const leftPanel = this.leftPanelElement;
 
-        if (!appContainer || !numericKeyboard || !key7 || !leftPanel) return;
+        if (!appContainer || !numericKeyboard || !leftPanel) return;
         
         const containerRect = appContainer.getBoundingClientRect();
-        const key7Rect = key7.getBoundingClientRect();
-        const rightPageMargin = 40;
         
+        // --- Width and Left Position (Unaffected by the bug) ---
+        const rightPageMargin = 40;
         leftPanel.style.left = containerRect.left + 'px';
         const newWidth = containerRect.width - rightPageMargin;
         leftPanel.style.width = newWidth + 'px';
-        leftPanel.style.top = key7Rect.top + 'px';
-        const keyHeight = key7Rect.height;
-        const gap = 5;
-        const totalKeysHeight = (keyHeight * 4) + (gap * 3);
-        leftPanel.style.height = totalKeysHeight + 'px';
+
+        // --- Height and Top Position (The Fix) ---
+        // 1. Calculate and cache the correct height ONCE, when the keyboard is visible.
+        if (this.cachedLeftPanelHeight === 0 && !numericKeyboard.classList.contains('is-collapsed')) {
+            const key7 = document.getElementById('key-7');
+            if (key7) {
+                const key7Rect = key7.getBoundingClientRect();
+                const keyHeight = key7Rect.height;
+                const gap = 5; // As defined in virtual-keyboard.css
+                this.cachedLeftPanelHeight = (keyHeight * 4) + (gap * 3);
+            }
+        }
+        // Use a fallback height if cache is still 0 (e.g., panel opened before first render)
+        const panelHeight = this.cachedLeftPanelHeight || 155; 
+
+        // 2. Calculate the keyboard's logical expanded height and its top position relative to the app container.
+        const keyboardTopPadding = 38; // As defined in virtual-keyboard.css
+        const keyboardBottomPadding = 8;
+        const keyboardExpandedHeight = panelHeight + keyboardTopPadding + keyboardBottomPadding;
+        const keyboardLogicalTop = containerRect.bottom - keyboardExpandedHeight;
+        
+        // 3. Set the left panel's position based on these stable, calculated values,
+        //    NOT on the current (and potentially incorrect) state of a hidden element.
+        leftPanel.style.top = (keyboardLogicalTop + keyboardTopPadding) + 'px';
+        leftPanel.style.height = panelHeight + 'px';
     }
 
     _initializeLeftPanelLayout() {
-        window.addEventListener('resize', () => {
+        // Use a ResizeObserver for more efficient layout adjustments than the 'resize' event.
+        const resizeObserver = new ResizeObserver(() => {
             if (this.leftPanelElement.classList.contains('is-expanded')) {
                 this._adjustLeftPanelLayout();
             }
         });
+        resizeObserver.observe(this.appElement);
+        
+        // Initial adjustment
         this._adjustLeftPanelLayout();
     }
     
@@ -110,13 +131,10 @@ export class UIManager {
 
             if (isExpanded) {
                 this._adjustLeftPanelLayout();
-            } else {
-                this.leftPanelElement.style.left = '';
             }
         }
     }
 
-    // This function now only handles buttons outside the left panel
     _updateButtonStates(state) {
         const { selectedRowIndex, isMultiDeleteMode, multiDeleteSelectedIndexes } = state.ui;
         const items = state.quoteData.rollerBlindItems;
