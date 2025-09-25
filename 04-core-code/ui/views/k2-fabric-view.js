@@ -22,7 +22,6 @@ export class K2FabricView {
         if (newMode) {
             const items = this.quoteService.getItems();
             const { lfModifiedRowIndexes } = this.uiService.getState();
-            // [REFACTORED] Updated check from 'BO1' to 'B2'
             const hasConflict = items.some((item, index) => 
                 item.fabricType === 'B2' && lfModifiedRowIndexes.has(index)
             );
@@ -49,7 +48,6 @@ export class K2FabricView {
             const { lfModifiedRowIndexes } = this.uiService.getState();
             const indexesToClear = new Set();
             items.forEach((item, index) => {
-                // [REFACTORED] Updated check from 'BO1' to 'B2'
                 if (item.fabricType === 'B2' && lfModifiedRowIndexes.has(index)) {
                     indexesToClear.add(index);
                 }
@@ -121,7 +119,6 @@ export class K2FabricView {
                 }
             }
 
-            // [REFACTORED] Updated check from 'BO1' to 'B2'
             if (activeEditMode === 'K2_LF_SELECT' && item.fabricType !== 'B2') {
                 this.eventAggregator.publish('showNotification', { message: 'Only items with TYPE "B2" can be selected.', type: 'error' });
                 return;
@@ -142,7 +139,6 @@ export class K2FabricView {
             this._exitAllK2Modes();
         } else {
             this.uiService.setActiveEditMode('K2_LF_SELECT');
-            // [REFACTORED] Updated hint text from 'BO1' to 'B2'
             this.eventAggregator.publish('showNotification', { message: 'Please select the items with TYPE \'B2\' to edit the fabric name and color settings for the roller blinds.' });
             this.publish();
         }
@@ -188,9 +184,11 @@ export class K2FabricView {
                 const field = input.dataset.field;
 
                 if (type !== 'LF') {
-                    // [REFACTORED] Updated check from 'BO1' to 'B2' for the 'hasBO1' variable
-                    const hasB2 = presentTypes.has('B2'); 
-                    this.lfButton.disabled = (activeEditMode !== null && activeEditMode !== 'K2_LF_SELECT') || !hasB2;
+                    // [BUG FIX] The line below was removed. It was violating architecture by attempting
+                    // to access a DOM element property from the logic layer, causing a crash.
+                    // The correct logic for this already exists in the rendering layer (left-panel-component.js).
+                    // --- const hasB2 = presentTypes.has('B2'); 
+                    // --- this.lfButton.disabled = (activeEditMode !== null && activeEditMode !== 'K2_LF_SELECT') || !hasB2;
 
                     const isEnabled = presentTypes.has(type);
                     input.disabled = !isEnabled;
