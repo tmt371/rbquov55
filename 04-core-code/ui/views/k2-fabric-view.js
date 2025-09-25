@@ -22,13 +22,14 @@ export class K2FabricView {
         if (newMode) {
             const items = this.quoteService.getItems();
             const { lfModifiedRowIndexes } = this.uiService.getState();
+            // [REFACTORED] Updated check from 'BO1' to 'B2'
             const hasConflict = items.some((item, index) => 
-                item.fabricType === 'BO1' && lfModifiedRowIndexes.has(index)
+                item.fabricType === 'B2' && lfModifiedRowIndexes.has(index)
             );
 
             if (hasConflict) {
                 this.eventAggregator.publish('showConfirmationDialog', {
-                    message: 'Some BO1 items have Light-Filter settings. Continuing will overwrite this data. Proceed?',
+                    message: 'Some B2 items have Light-Filter settings. Continuing will overwrite this data. Proceed?',
                     buttons: [
                         { text: 'OK', callback: () => this._enterFCMode(true) },
                         { text: 'Cancel', className: 'secondary', callback: () => {} }
@@ -48,7 +49,8 @@ export class K2FabricView {
             const { lfModifiedRowIndexes } = this.uiService.getState();
             const indexesToClear = new Set();
             items.forEach((item, index) => {
-                if (item.fabricType === 'BO1' && lfModifiedRowIndexes.has(index)) {
+                // [REFACTORED] Updated check from 'BO1' to 'B2'
+                if (item.fabricType === 'B2' && lfModifiedRowIndexes.has(index)) {
                     indexesToClear.add(index);
                 }
             });
@@ -65,9 +67,7 @@ export class K2FabricView {
     handlePanelInputBlur({ type, field, value }) {
         const { lfSelectedRowIndexes } = this.uiService.getState();
         
-        // This logic is now primarily for non-LF fields, as LF saving is handled explicitly on Enter.
         if (type === 'LF') {
-           // To be safe, we can trigger a save on blur too.
             const fNameInput = document.querySelector('input[data-type="LF"][data-field="fabric"]');
             const fColorInput = document.querySelector('input[data-type="LF"][data-field="color"]');
             
@@ -92,7 +92,6 @@ export class K2FabricView {
             nextInput.focus();
             nextInput.select();
         } else {
-            // [FIX] For the last input, explicitly save LF data before exiting the mode.
             if (activeElement.dataset.type === 'LF' || (activeElement.dataset.type !== 'LF' && this.uiService.getState().activeEditMode === 'K2')) {
                  const { lfSelectedRowIndexes } = this.uiService.getState();
                  const fNameInput = document.querySelector('input[data-type="LF"][data-field="fabric"]');
@@ -122,8 +121,9 @@ export class K2FabricView {
                 }
             }
 
-            if (activeEditMode === 'K2_LF_SELECT' && item.fabricType !== 'BO1') {
-                this.eventAggregator.publish('showNotification', { message: 'Only items with TYPE "BO1" can be selected.', type: 'error' });
+            // [REFACTORED] Updated check from 'BO1' to 'B2'
+            if (activeEditMode === 'K2_LF_SELECT' && item.fabricType !== 'B2') {
+                this.eventAggregator.publish('showNotification', { message: 'Only items with TYPE "B2" can be selected.', type: 'error' });
                 return;
             }
             this.uiService.toggleLFSelection(rowIndex);
@@ -142,7 +142,8 @@ export class K2FabricView {
             this._exitAllK2Modes();
         } else {
             this.uiService.setActiveEditMode('K2_LF_SELECT');
-            this.eventAggregator.publish('showNotification', { message: 'Please select the items with TYPE \'BO1\' to edit the fabric name and color settings for the roller blinds.' });
+            // [REFACTORED] Updated hint text from 'BO1' to 'B2'
+            this.eventAggregator.publish('showNotification', { message: 'Please select the items with TYPE \'B2\' to edit the fabric name and color settings for the roller blinds.' });
             this.publish();
         }
     }
@@ -187,6 +188,10 @@ export class K2FabricView {
                 const field = input.dataset.field;
 
                 if (type !== 'LF') {
+                    // [REFACTORED] Updated check from 'BO1' to 'B2' for the 'hasBO1' variable
+                    const hasB2 = presentTypes.has('B2'); 
+                    this.lfButton.disabled = (activeEditMode !== null && activeEditMode !== 'K2_LF_SELECT') || !hasB2;
+
                     const isEnabled = presentTypes.has(type);
                     input.disabled = !isEnabled;
 
@@ -196,6 +201,8 @@ export class K2FabricView {
                         }
                         const itemWithData = items.find(item => item.fabricType === type && typeof item[field] === 'string');
                         input.value = itemWithData ? itemWithData[field] : '';
+                    } else {
+                        input.value = '';
                     }
                 } else {
                     input.disabled = true;

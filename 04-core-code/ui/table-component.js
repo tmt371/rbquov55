@@ -141,7 +141,8 @@ export class TableComponent {
             TYPE: (cell, item, index, state) => {
                 const { activeCell } = state.ui;
                 cell.textContent = (item.width || item.height) ? (item.fabricType || '') : '';
-                if (item.fabricType === 'BO1') cell.classList.add('type-bo1');
+                // [REFACTORED] Updated check from 'BO1' to 'B2' and class name from 'type-bo1' to 'type-b2'
+                if (item.fabricType === 'B2') cell.classList.add('type-b2');
                 else if (item.fabricType === 'SN') cell.classList.add('type-sn');
                 if (activeCell && index === activeCell.rowIndex && activeCell.column === 'TYPE') cell.classList.add('active-input-cell');
             },
@@ -151,7 +152,8 @@ export class TableComponent {
             },
             fabricTypeDisplay: (cell, item) => {
                 cell.textContent = item.fabricType || '';
-                if (item.fabricType === 'BO1') cell.classList.add('type-bo1');
+                // [REFACTORED] Updated check from 'BO1' to 'B2' and class name from 'type-bo1' to 'type-b2'
+                if (item.fabricType === 'B2') cell.classList.add('type-b2');
                 else if (item.fabricType === 'SN') cell.classList.add('type-sn');
             },
             dual: (cell, item) => {

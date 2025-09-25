@@ -7,11 +7,9 @@
  */
 
 export class QuoteService {
-    // [REFACTORED] Added configManager to the constructor dependency injection
     constructor({ initialState, productFactory, configManager }) {
         this.quoteData = JSON.parse(JSON.stringify(initialState.quoteData));
         this.productFactory = productFactory;
-        // [REFACTORED] Store the configManager instance
         this.configManager = configManager; 
         this.initialSummary = JSON.parse(JSON.stringify(initialState.quoteData.summary));
 
@@ -242,9 +240,8 @@ export class QuoteService {
         const item = this._getItems()[rowIndex];
         if (!item || (!item.width && !item.height)) return false;
 
-        // [REFACTORED] Removed hardcoded array, now gets sequence from ConfigManager.
         const TYPE_SEQUENCE = this.configManager.getFabricTypeSequence();
-        if (TYPE_SEQUENCE.length === 0) return false; // Safety check
+        if (TYPE_SEQUENCE.length === 0) return false; 
 
         const currentType = item.fabricType;
         const currentIndex = TYPE_SEQUENCE.indexOf(currentType);
