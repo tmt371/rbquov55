@@ -14,9 +14,9 @@ export class QuoteService {
         this.initialSummary = JSON.parse(JSON.stringify(initialState.quoteData.summary));
 
 
-        const currentProduct = 'rollerBlind'; // 未來此值可由外部傳入
-        this.productStrategy = this.productFactory.getProductStrategy(currentProduct);
-        this.itemListName = `${currentProduct}Items`; // e.g., 'rollerBlindItems'
+        this.currentProduct = 'rollerBlind'; // 未來此值可由外部傳入
+        this.productStrategy = this.productFactory.getProductStrategy(this.currentProduct);
+        this.itemListName = `${this.currentProduct}Items`; // e.g., 'rollerBlindItems'
 
         console.log("QuoteService Initialized.");
     }
@@ -29,6 +29,11 @@ export class QuoteService {
         return this.quoteData[this.itemListName];
     }
     
+    // [FIX] Added the missing getter method required by the view layer.
+    getCurrentProductType() {
+        return this.currentProduct;
+    }
+
     _getItems() {
         return this.quoteData[this.itemListName];
     }
