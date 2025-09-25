@@ -4,7 +4,8 @@
  * @fileoverview View module responsible for all logic related to the Quick Quote screen.
  */
 export class QuickQuoteView {
-    constructor({ quoteService, calculationService, focusService, fileService, uiService, eventAggregator, productFactory, publishStateChangeCallback }) {
+    // [REFACTORED] Added configManager to the constructor dependency injection
+    constructor({ quoteService, calculationService, focusService, fileService, uiService, eventAggregator, productFactory, configManager, publishStateChangeCallback }) {
         this.quoteService = quoteService;
         this.calculationService = calculationService;
         this.focusService = focusService;
@@ -12,6 +13,8 @@ export class QuickQuoteView {
         this.uiService = uiService;
         this.eventAggregator = eventAggregator;
         this.productFactory = productFactory;
+        // [REFACTORED] Store the configManager instance
+        this.configManager = configManager;
         this.publish = publishStateChangeCallback;
         this.currentProduct = 'rollerBlind';
     }
@@ -84,7 +87,7 @@ export class QuickQuoteView {
         this.eventAggregator.publish('operationSuccessfulAutoHidePanel');
     }
 
-    handleNumericKeyPress({ key }) { // [FIXED] Destructuring the data object
+    handleNumericKeyPress({ key }) {
         if (!isNaN(parseInt(key))) {
             this.uiService.appendInputValue(key);
         } else if (key === 'DEL') {
@@ -155,7 +158,7 @@ export class QuickQuoteView {
         this.publish();
     }
     
-    handleMoveActiveCell({ direction }) { // [FIXED] Destructuring the data object
+    handleMoveActiveCell({ direction }) {
         this.focusService.moveActiveCell(direction);
         this.publish();
     }
@@ -181,7 +184,11 @@ export class QuickQuoteView {
         const items = this.quoteService.getItems();
         const eligibleItems = items.filter(item => item.width && item.height);
         if (eligibleItems.length === 0) return;
-        const TYPE_SEQUENCE = ['BO', 'BO1', 'SN'];
+        
+        // [REFACTORED] Removed hardcoded array, now gets sequence from ConfigManager.
+        const TYPE_SEQUENCE = this.configManager.getFabricTypeSequence();
+        if (TYPE_SEQUENCE.length === 0) return; // Safety check
+
         const firstType = eligibleItems[0].fabricType;
         const currentIndex = TYPE_SEQUENCE.indexOf(firstType);
         const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];

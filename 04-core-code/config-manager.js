@@ -4,7 +4,9 @@ export class ConfigManager {
     constructor(eventAggregator) {
         this.eventAggregator = eventAggregator;
         this.priceMatrices = null;
-        this.accessories = null; // [NEW] Add a property to store accessory prices
+        this.accessories = null;
+        // [NEW] Add a property to store the fabric type sequence
+        this.fabricTypeSequence = null; 
         this.isInitialized = false;
     }
 
@@ -19,7 +21,9 @@ export class ConfigManager {
             }
             const data = await response.json();
             this.priceMatrices = data.matrices;
-            this.accessories = data.accessories; // [NEW] Load and store the accessories object
+            this.accessories = data.accessories;
+            // [NEW] Load and store the fabric type sequence, with a fallback
+            this.fabricTypeSequence = data.fabricTypeSequence || [];
             this.isInitialized = true;
             console.log("ConfigManager initialized and price matrices loaded successfully.");
 
@@ -30,7 +34,7 @@ export class ConfigManager {
     }
 
     /**
-     * [MODIFIED] Retrieves the price matrix for a given fabric type.
+     * Retrieves the price matrix for a given fabric type.
      * @param {string} fabricType - e.g., 'BO', 'BO1', 'SN'
      * @returns {object|null}
      */
@@ -43,7 +47,7 @@ export class ConfigManager {
     }
 
     /**
-     * [NEW] Retrieves the price for a specific accessory.
+     * Retrieves the price for a specific accessory.
      * @param {string} accessoryKey - The key of the accessory (e.g., 'winderHD', 'motorStandard').
      * @returns {number|null} The price of the accessory, or null if not found.
      */
@@ -58,5 +62,17 @@ export class ConfigManager {
         }
         console.error(`Accessory price for '${accessoryKey}' not found.`);
         return null;
+    }
+
+    /**
+     * [NEW] Retrieves the fabric type sequence array.
+     * @returns {Array<string>} The sequence of fabric types.
+     */
+    getFabricTypeSequence() {
+        if (!this.isInitialized || !this.fabricTypeSequence) {
+            console.error("ConfigManager not initialized or fabricTypeSequence not loaded.");
+            return []; // Return an empty array to prevent downstream errors
+        }
+        return this.fabricTypeSequence;
     }
 }

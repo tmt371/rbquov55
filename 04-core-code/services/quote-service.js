@@ -7,16 +7,17 @@
  */
 
 export class QuoteService {
-    constructor({ initialState, productFactory }) {
-        // 使用深拷貝確保 QuoteService 擁有獨立的、純淨的資料狀態
+    // [REFACTORED] Added configManager to the constructor dependency injection
+    constructor({ initialState, productFactory, configManager }) {
         this.quoteData = JSON.parse(JSON.stringify(initialState.quoteData));
         this.productFactory = productFactory;
+        // [REFACTORED] Store the configManager instance
+        this.configManager = configManager; 
         this.initialSummary = JSON.parse(JSON.stringify(initialState.quoteData.summary));
 
-
-        this.currentProduct = 'rollerBlind'; // 未來此值可由外部傳入
+        this.currentProduct = 'rollerBlind';
         this.productStrategy = this.productFactory.getProductStrategy(this.currentProduct);
-        this.itemListName = `${this.currentProduct}Items`; // e.g., 'rollerBlindItems'
+        this.itemListName = `${this.currentProduct}Items`;
 
         console.log("QuoteService Initialized.");
     }
@@ -29,7 +30,6 @@ export class QuoteService {
         return this.quoteData[this.itemListName];
     }
     
-    // [FIX] Added the missing getter method required by the view layer.
     getCurrentProductType() {
         return this.currentProduct;
     }
@@ -69,7 +69,6 @@ export class QuoteService {
         const itemToClear = this._getItems()[selectedIndex];
         if (itemToClear) {
             const newItem = this.productStrategy.getInitialItemData();
-            // Preserve itemId, but clear all other fields
             newItem.itemId = itemToClear.itemId;
             this._getItems()[selectedIndex] = newItem;
         }
@@ -83,7 +82,6 @@ export class QuoteService {
             targetItem[column] = value;
             targetItem.linePrice = null;
 
-            // Auto-set Winder if area exceeds threshold and motor is not set
             if ((column === 'width' || column === 'height') && targetItem.width && targetItem.height) {
                 if ((targetItem.width * targetItem.height) > 4000000 && !targetItem.motor) {
                     targetItem.winder = 'HD';
@@ -111,7 +109,6 @@ export class QuoteService {
 
         if (item[property] !== value) {
             item[property] = value;
-            // Mutex Logic: If a value is set, clear the other property
             if (value) {
                 if (property === 'winder') item.motor = '';
                 if (property === 'motor') item.winder = '';
@@ -245,7 +242,10 @@ export class QuoteService {
         const item = this._getItems()[rowIndex];
         if (!item || (!item.width && !item.height)) return false;
 
-        const TYPE_SEQUENCE = ['BO', 'BO1', 'SN'];
+        // [REFACTORED] Removed hardcoded array, now gets sequence from ConfigManager.
+        const TYPE_SEQUENCE = this.configManager.getFabricTypeSequence();
+        if (TYPE_SEQUENCE.length === 0) return false; // Safety check
+
         const currentType = item.fabricType;
         const currentIndex = TYPE_SEQUENCE.indexOf(currentType);
         const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];

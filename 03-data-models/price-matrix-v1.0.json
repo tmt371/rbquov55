@@ -5,6 +5,7 @@
     "gstIncluded": false,
     "currency": "AUD"
   },
+  "fabricTypeSequence": ["BO", "BO1", "SN"],
   "matrices": {
     "BO": {
       "name": "UNILINE-SUNSET (BO)",

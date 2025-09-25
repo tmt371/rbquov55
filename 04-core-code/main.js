@@ -20,7 +20,6 @@ import { DetailConfigView } from './ui/views/detail-config-view.js';
 import { K1LocationView } from './ui/views/k1-location-view.js';
 import { K2FabricView } from './ui/views/k2-fabric-view.js';
 import { K3OptionsView } from './ui/views/k3-options-view.js';
-// [REFACTORED] Import views from their new, semantic file names and with new class names
 import { DualChainView } from './ui/views/dual-chain-view.js';
 import { DriveAccessoriesView } from './ui/views/drive-accessories-view.js';
 
@@ -54,9 +53,11 @@ class App {
         const productFactory = new ProductFactory();
 
         // Services are instantiated here...
+        // [REFACTORED] Injected configManager into QuoteService
         const quoteService = new QuoteService({
             initialState: startingState,
-            productFactory: productFactory
+            productFactory: productFactory,
+            configManager: this.configManager
         });
         const calculationService = new CalculationService({
             productFactory: productFactory,
@@ -71,6 +72,7 @@ class App {
 
         const publishStateChangeCallback = () => this.eventAggregator.publish('stateChanged', this.appController._getFullState());
 
+        // [REFACTORED] Injected configManager into QuickQuoteView
         const quickQuoteView = new QuickQuoteView({
             quoteService,
             calculationService,
@@ -79,6 +81,7 @@ class App {
             uiService,
             eventAggregator: this.eventAggregator,
             productFactory,
+            configManager: this.configManager,
             publishStateChangeCallback
         });
 
@@ -101,7 +104,6 @@ class App {
             publishStateChangeCallback
         });
         
-        // [REFACTORED] Instantiate views with new class names and semantic variable names
         const dualChainView = new DualChainView({
             quoteService,
             uiService,
@@ -127,7 +129,6 @@ class App {
             k1LocationView: k1LocationView,
             k2FabricView: k2FabricView,
             k3OptionsView: k3OptionsView,
-            // [REFACTORED] Inject instances with new semantic names
             dualChainView: dualChainView,
             driveAccessoriesView: driveAccessoriesView
         });
