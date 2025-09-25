@@ -19,35 +19,37 @@ export class UIService {
         this.state.lfSelectedRowIndexes = new Set();
         this.state.lfModifiedRowIndexes = new Set();
 
-        this.state.k4ActiveMode = null; // 'dual', or 'chain'
-        this.state.chainInputValue = '';
-        this.state.k4DualPrice = null;
+        // [REFACTORED] Renamed k4... state variables to reflect their 'Dual/Chain' functionality
+        this.state.dualChainMode = null; // 'dual', or 'chain'
+        this.state.dualChainInputValue = '';
+        this.state.dualPrice = null;
 
-        this._initializeK5State();
+        // [REFACTORED] Renamed k5... initialization to reflect its 'Drive/Accessory' functionality
+        this._initializeDriveAccessoryState();
         
         console.log("UIService Initialized.");
     }
 
-    _initializeK5State() {
-        this.state.k5ActiveMode = null;
-        this.state.k5RemoteCount = 0;
-        this.state.k5ChargerCount = 0;
-        this.state.k5CordCount = 0;
-        this.state.k5WinderTotalPrice = null;
-        this.state.k5MotorTotalPrice = null;
-        this.state.k5RemoteTotalPrice = null;
-        this.state.k5ChargerTotalPrice = null;
-        this.state.k5CordTotalPrice = null;
-        this.state.k5GrandTotal = null;
+    // [REFACTORED] Renamed method from _initializeK5State
+    _initializeDriveAccessoryState() {
+        // [REFACTORED] Renamed all k5... state variables
+        this.state.driveAccessoryMode = null;
+        this.state.driveRemoteCount = 0;
+        this.state.driveChargerCount = 0;
+        this.state.driveCordCount = 0;
+        this.state.driveWinderTotalPrice = null;
+        this.state.driveMotorTotalPrice = null;
+        this.state.driveRemoteTotalPrice = null;
+        this.state.driveChargerTotalPrice = null;
+        this.state.driveCordTotalPrice = null;
+        this.state.driveGrandTotal = null;
         
-        this.state.k5WinderSummaryValue = null;
-        this.state.k5MotorSummaryValue = null;
-
-        // [NEW] Add state for new K5 summary display boxes
-        this.state.k5RemoteSummaryValue = null;
-        this.state.k5ChargerSummaryValue = null;
-        this.state.k5CordSummaryValue = null;
-        this.state.k5AccessoriesTotalValue = null;
+        this.state.summaryWinderPrice = null;
+        this.state.summaryMotorPrice = null;
+        this.state.summaryRemotePrice = null;
+        this.state.summaryChargerPrice = null;
+        this.state.summaryCordPrice = null;
+        this.state.summaryAccessoriesTotal = null;
     }
 
     getState() {
@@ -65,11 +67,12 @@ export class UIService {
         this.state.lfSelectedRowIndexes = new Set();
         this.state.lfModifiedRowIndexes = new Set();
 
-        this.state.k4ActiveMode = null;
-        this.state.chainInputValue = '';
-        this.state.k4DualPrice = null;
+        // [REFACTORED] Reset renamed state variables
+        this.state.dualChainMode = null;
+        this.state.dualChainInputValue = '';
+        this.state.dualPrice = null;
 
-        this._initializeK5State();
+        this._initializeDriveAccessoryState();
     }
 
     setActiveCell(rowIndex, column) {
@@ -100,6 +103,8 @@ export class UIService {
     clearRowSelection() {
         this.state.selectedRowIndex = null;
     }
+
+
 
     toggleMultiDeleteMode() {
         const isEnteringMode = !this.state.isMultiDeleteMode;
@@ -179,73 +184,72 @@ export class UIService {
         return this.state.lfModifiedRowIndexes.size > 0;
     }
 
-    // --- K4 State Management ---
-    setK4ActiveMode(mode) {
-        this.state.k4ActiveMode = mode;
+    // --- [REFACTORED] Dual/Chain Mode State Management ---
+    setDualChainMode(mode) {
+        this.state.dualChainMode = mode;
     }
 
-    setChainInputValue(value) {
-        this.state.chainInputValue = String(value || '');
+    setDualChainInputValue(value) {
+        this.state.dualChainInputValue = String(value || '');
     }
     
-    clearChainInputValue() {
-        this.state.chainInputValue = '';
+    clearDualChainInputValue() {
+        this.state.dualChainInputValue = '';
     }
     
-    setK4DualPrice(price) {
-        this.state.k4DualPrice = price;
+    setDualPrice(price) {
+        this.state.dualPrice = price;
     }
 
-    // --- K5 State Management ---
-    setK5ActiveMode(mode) {
-        this.state.k5ActiveMode = mode;
+    // --- [REFACTORED] Drive & Accessories State Management ---
+    setDriveAccessoryMode(mode) {
+        this.state.driveAccessoryMode = mode;
     }
     
-    setK5Count(accessory, count) {
+    setDriveAccessoryCount(accessory, count) {
         if (count < 0) return;
         switch(accessory) {
-            case 'remote': this.state.k5RemoteCount = count; break;
-            case 'charger': this.state.k5ChargerCount = count; break;
-            case 'cord': this.state.k5CordCount = count; break;
+            case 'remote': this.state.driveRemoteCount = count; break;
+            case 'charger': this.state.driveChargerCount = count; break;
+            case 'cord': this.state.driveCordCount = count; break;
         }
     }
 
-    setK5TotalPrice(accessory, price) {
+    setDriveAccessoryTotalPrice(accessory, price) {
         switch(accessory) {
-            case 'winder': this.state.k5WinderTotalPrice = price; break;
-            case 'motor': this.state.k5MotorTotalPrice = price; break;
-            case 'remote': this.state.k5RemoteTotalPrice = price; break;
-            case 'charger': this.state.k5ChargerTotalPrice = price; break;
-            case 'cord': this.state.k5CordTotalPrice = price; break;
+            case 'winder': this.state.driveWinderTotalPrice = price; break;
+            case 'motor': this.state.driveMotorTotalPrice = price; break;
+            case 'remote': this.state.driveRemoteTotalPrice = price; break;
+            case 'charger': this.state.driveChargerTotalPrice = price; break;
+            case 'cord': this.state.driveCordTotalPrice = price; break;
         }
     }
 
-    setK5GrandTotal(price) {
-        this.state.k5GrandTotal = price;
+    setDriveGrandTotal(price) {
+        this.state.driveGrandTotal = price;
     }
 
-    setK5WinderSummaryValue(value) {
-        this.state.k5WinderSummaryValue = value;
+    setSummaryWinderPrice(value) {
+        this.state.summaryWinderPrice = value;
     }
 
-    setK5MotorSummaryValue(value) {
-        this.state.k5MotorSummaryValue = value;
+    setSummaryMotorPrice(value) {
+        this.state.summaryMotorPrice = value;
     }
 
-    // [NEW] Setters for the new K5 summary display values
-    setK5RemoteSummaryValue(value) {
-        this.state.k5RemoteSummaryValue = value;
+    setSummaryRemotePrice(value) {
+        this.state.summaryRemotePrice = value;
     }
 
-    setK5ChargerSummaryValue(value) {
-        this.state.k5ChargerSummaryValue = value;
+    setSummaryChargerPrice(value) {
+        this.state.summaryChargerPrice = value;
     }
 
-    setK5CordSummaryValue(value) {
-        this.state.k5CordSummaryValue = value;
+    setSummaryCordPrice(value) {
+        this.state.summaryCordPrice = value;
     }
 
-    setK5AccessoriesTotalValue(value) {
-        this.state.k5AccessoriesTotalValue = value;
+    setSummaryAccessoriesTotal(value) {
+        this.state.summaryAccessoriesTotal = value;
     }
 }

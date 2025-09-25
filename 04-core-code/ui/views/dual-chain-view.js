@@ -18,7 +18,8 @@ export class DualChainView {
      * @param {object} data - The event data containing the mode.
      */
     handleModeChange({ mode }) {
-        const currentMode = this.uiService.getState().k4ActiveMode;
+        // [REFACTORED] Read the new semantic state 'dualChainMode'
+        const currentMode = this.uiService.getState().dualChainMode;
 
         // --- Logic on EXITING a mode ---
         if (currentMode === 'dual') {
@@ -32,23 +33,27 @@ export class DualChainView {
                 return;
             }
             const price = this.calculationService.calculateDualPrice(items);
-            this.uiService.setK4DualPrice(price);
+            // [REFACTORED] Set the new semantic state 'dualPrice'
+            this.uiService.setDualPrice(price);
 
-            // [NEW] Trigger total calculation on exiting dual mode
-            this._updateK5AccessoriesTotal();
+            // [REFACTORED] Trigger total calculation on exiting dual mode
+            this._updateSummaryAccessoriesTotal();
         }
 
         const newMode = currentMode === mode ? null : mode;
-        this.uiService.setK4ActiveMode(newMode);
+        // [REFACTORED] Set the new semantic state 'dualChainMode'
+        this.uiService.setDualChainMode(newMode);
 
         // --- Logic on ENTERING a mode ---
         if (newMode === 'dual') {
-            this.uiService.setK4DualPrice(null);
+            // [REFACTORED] Set the new semantic state 'dualPrice'
+            this.uiService.setDualPrice(null);
         }
         
         if (!newMode) {
             this.uiService.setTargetCell(null);
-            this.uiService.clearChainInputValue();
+            // [REFACTORED] Clear using new semantic method
+            this.uiService.clearDualChainInputValue();
         }
 
         this.publish();
@@ -75,7 +80,8 @@ export class DualChainView {
         this.quoteService.updateItemProperty(currentTarget.rowIndex, currentTarget.column, valueToSave);
         
         this.uiService.setTargetCell(null);
-        this.uiService.clearChainInputValue();
+        // [REFACTORED] Clear using new semantic method
+        this.uiService.clearDualChainInputValue();
         this.publish();
     }
 
@@ -84,19 +90,21 @@ export class DualChainView {
      * @param {object} data - The event data { rowIndex, column }.
      */
     handleTableCellClick({ rowIndex, column }) {
-        const { k4ActiveMode } = this.uiService.getState();
+        // [REFACTORED] Read the new semantic state 'dualChainMode'
+        const { dualChainMode } = this.uiService.getState();
         const item = this.quoteService.getItems()[rowIndex];
         if (!item) return;
 
-        if (k4ActiveMode === 'dual' && column === 'dual') {
+        if (dualChainMode === 'dual' && column === 'dual') {
             const newValue = item.dual === 'D' ? '' : 'D';
             this.quoteService.updateItemProperty(rowIndex, 'dual', newValue);
             this.publish();
         }
 
-        if (k4ActiveMode === 'chain' && column === 'chain') {
+        if (dualChainMode === 'chain' && column === 'chain') {
             this.uiService.setTargetCell({ rowIndex, column: 'chain' });
-            this.uiService.setChainInputValue(item.chain || '');
+            // [REFACTORED] Set input value using new semantic method
+            this.uiService.setDualChainInputValue(item.chain || '');
             this.publish();
 
             setTimeout(() => {
@@ -113,34 +121,38 @@ export class DualChainView {
     activate() {
         this.uiService.setVisibleColumns(['sequence', 'fabricTypeDisplay', 'location', 'dual', 'chain']);
         
-        // Synchronize all summary data from K4's state when this tab is activated
+        // Synchronize all summary data from Drive/Accessory state when this tab is activated
         const currentState = this.uiService.getState();
-        this.uiService.setK5WinderSummaryValue(currentState.k5WinderTotalPrice);
-        this.uiService.setK5MotorSummaryValue(currentState.k5MotorTotalPrice);
-        this.uiService.setK5RemoteSummaryValue(currentState.k5RemoteTotalPrice);
-        this.uiService.setK5ChargerSummaryValue(currentState.k5ChargerTotalPrice);
-        this.uiService.setK5CordSummaryValue(currentState.k5CordTotalPrice);
+        // [REFACTORED] Read from new 'drive...' state and set new 'summary...' state
+        this.uiService.setSummaryWinderPrice(currentState.driveWinderTotalPrice);
+        this.uiService.setSummaryMotorPrice(currentState.driveMotorTotalPrice);
+        this.uiService.setSummaryRemotePrice(currentState.driveRemoteTotalPrice);
+        this.uiService.setSummaryChargerPrice(currentState.driveChargerTotalPrice);
+        this.uiService.setSummaryCordPrice(currentState.driveCordTotalPrice);
 
-        // [NEW] Calculate the final total after syncing
-        this._updateK5AccessoriesTotal();
+        // [REFACTORED] Calculate the final total after syncing
+        this._updateSummaryAccessoriesTotal();
     }
 
     /**
-     * [NEW] Calculates the total of all accessories displayed on the K5 tab.
+     * [REFACTORED] Renamed method and updated logic to use new semantic state.
+     * Calculates the total of all accessories displayed on the K5 summary tab.
      * @private
      */
-    _updateK5AccessoriesTotal() {
+    _updateSummaryAccessoriesTotal() {
         const state = this.uiService.getState();
         
-        const dualPrice = state.k4DualPrice || 0;
-        const winderPrice = state.k5WinderTotalPrice || 0;
-        const motorPrice = state.k5MotorTotalPrice || 0;
-        const remotePrice = state.k5RemoteTotalPrice || 0;
-        const chargerPrice = state.k5ChargerTotalPrice || 0;
-        const cordPrice = state.k5CordTotalPrice || 0;
+        // [REFACTORED] Read all values from the new semantic state variables
+        const dualPrice = state.dualPrice || 0;
+        const winderPrice = state.driveWinderTotalPrice || 0;
+        const motorPrice = state.driveMotorTotalPrice || 0;
+        const remotePrice = state.driveRemoteTotalPrice || 0;
+        const chargerPrice = state.driveChargerTotalPrice || 0;
+        const cordPrice = state.driveCordTotalPrice || 0;
 
         const total = dualPrice + winderPrice + motorPrice + remotePrice + chargerPrice + cordPrice;
         
-        this.uiService.setK5AccessoriesTotalValue(total);
+        // [REFACTORED] Set the total using the new semantic method
+        this.uiService.setSummaryAccessoriesTotal(total);
     }
 }

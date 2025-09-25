@@ -127,10 +127,11 @@ export class DetailConfigView {
     }
 
     handleTableCellClick({ rowIndex, column }) {
-        const { activeEditMode, k4ActiveMode, k5ActiveMode } = this.uiService.getState();
+        // [REFACTORED] Read the new semantic state variables from the UI service
+        const { activeEditMode, dualChainMode, driveAccessoryMode } = this.uiService.getState();
         
-        // Note: k4ActiveMode now corresponds to dualChainView, k5ActiveMode to driveAccessoriesView
-        if (k5ActiveMode) {
+        // [REFACTORED] Check against the new 'driveAccessoryMode' state
+        if (driveAccessoryMode) {
             this.driveAccessoriesView.handleTableCellClick({ rowIndex, column });
             return;
         }
@@ -145,7 +146,8 @@ export class DetailConfigView {
             return;
         }
 
-        if (k4ActiveMode) {
+        // [REFACTORED] Check against the new 'dualChainMode' state
+        if (dualChainMode) {
             this.dualChainView.handleTableCellClick({ rowIndex, column });
             return;
         }

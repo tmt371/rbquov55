@@ -60,7 +60,6 @@ export class LeftPanelComponent {
         this.k5WinderSummaryDisplay = document.getElementById('k5-display-winder-summary');
         this.k5MotorSummaryDisplay = document.getElementById('k5-display-motor-summary');
         
-        // [NEW] K5 Summary Display Boxes for rows 3 & 4
         this.k5RemoteSummaryDisplay = document.getElementById('k5-display-remote-summary');
         this.k5ChargerSummaryDisplay = document.getElementById('k5-display-charger-summary');
         this.k5CordSummaryDisplay = document.getElementById('k5-display-cord-summary');
@@ -79,10 +78,9 @@ export class LeftPanelComponent {
     }
 
     _updateTabStates(uiState) {
-        // NOTE: The IDs on the K4/K5 buttons/displays are semantically incorrect due to the swap.
-        // We use k4ActiveMode for Dual/Chain and k5ActiveMode for Drive/Accessories.
-        const { activeEditMode, activeTabId, k4ActiveMode, k5ActiveMode } = uiState;
-        const isInEditMode = activeEditMode !== null || k4ActiveMode !== null || k5ActiveMode !== null;
+        // [REFACTORED] Read new semantic state variables
+        const { activeEditMode, activeTabId, dualChainMode, driveAccessoryMode } = uiState;
+        const isInEditMode = activeEditMode !== null || dualChainMode !== null || driveAccessoryMode !== null;
 
         const activeTabButton = document.getElementById(activeTabId);
         const activeContentTarget = activeTabButton ? activeTabButton.dataset.tabTarget : null;
@@ -103,22 +101,22 @@ export class LeftPanelComponent {
             'k1-tab': 'var(--k1-bg-color)',
             'k2-tab': 'var(--k2-bg-color)',
             'k3-tab': 'var(--k3-bg-color)',
-            'k4-tab': 'var(--k4-bg-color)', // Should be k5 color due to swap
-            'k5-tab': 'var(--k5-bg-color)', // Should be k4 color due to swap
+            'k4-tab': 'var(--k4-bg-color)',
+            'k5-tab': 'var(--k5-bg-color)',
         };
         this.panelElement.style.backgroundColor = panelBgColors[activeTabId] || 'var(--k1-bg-color)';
     }
 
     _updatePanelButtonStates(uiState, quoteData) {
+        // [REFACTORED] Destructure all the new semantic state variables from uiState
         const { 
             activeEditMode, locationInputValue, lfModifiedRowIndexes, 
-            k4ActiveMode, k4DualPrice, targetCell, chainInputValue,
-            k5ActiveMode, k5RemoteCount, k5ChargerCount, k5CordCount,
-            k5WinderTotalPrice, k5MotorTotalPrice, k5RemoteTotalPrice, k5ChargerTotalPrice, k5CordTotalPrice,
-            k5GrandTotal,
-            k5WinderSummaryValue, k5MotorSummaryValue,
-            // [NEW] Get new K5 summary values from state
-            k5RemoteSummaryValue, k5ChargerSummaryValue, k5CordSummaryValue, k5AccessoriesTotalValue
+            dualChainMode, dualPrice, targetCell, dualChainInputValue,
+            driveAccessoryMode, driveRemoteCount, driveChargerCount, driveCordCount,
+            driveWinderTotalPrice, driveMotorTotalPrice, driveRemoteTotalPrice, driveChargerTotalPrice, driveCordTotalPrice,
+            driveGrandTotal,
+            summaryWinderPrice, summaryMotorPrice,
+            summaryRemotePrice, summaryChargerPrice, summaryCordPrice, summaryAccessoriesTotal
         } = uiState;
         const { rollerBlindItems } = quoteData;
 
@@ -173,87 +171,95 @@ export class LeftPanelComponent {
             { el: this.k4CordButton, mode: 'cord' }
         ];
         
-        const isAnyK4ModeActive = k5ActiveMode !== null; // Uses k5 state due to swap
+        // [REFACTORED] Check against the new 'driveAccessoryMode' state
+        const isAnyK4ModeActive = driveAccessoryMode !== null;
         k4Buttons.forEach(({ el, mode }) => {
             if (el) {
-                const isActive = k5ActiveMode === mode;
+                // [REFACTORED] Check against the new 'driveAccessoryMode' state
+                const isActive = driveAccessoryMode === mode;
                 el.classList.toggle('active', isActive);
                 el.disabled = isAnyK4ModeActive && !isActive;
             }
         });
+        
+        // [REFACTORED] Render display values from the new 'drive...' state variables
+        if (this.k4WinderDisplay) this.k4WinderDisplay.value = formatPrice(driveWinderTotalPrice);
+        if (this.k4MotorDisplay) this.k4MotorDisplay.value = formatPrice(driveMotorTotalPrice);
+        if (this.k4RemoteDisplay) this.k4RemoteDisplay.value = formatPrice(driveRemoteTotalPrice);
+        if (this.k4ChargerDisplay) this.k4ChargerDisplay.value = formatPrice(driveChargerTotalPrice);
+        if (this.k4CordDisplay) this.k4CordDisplay.value = formatPrice(driveCordTotalPrice);
 
-        if (this.k4WinderDisplay) this.k4WinderDisplay.value = formatPrice(k5WinderTotalPrice);
-        if (this.k4MotorDisplay) this.k4MotorDisplay.value = formatPrice(k5MotorTotalPrice);
-        if (this.k4RemoteDisplay) this.k4RemoteDisplay.value = formatPrice(k5RemoteTotalPrice);
-        if (this.k4ChargerDisplay) this.k4ChargerDisplay.value = formatPrice(k5ChargerTotalPrice);
-        if (this.k4CordDisplay) this.k4CordDisplay.value = formatPrice(k5CordTotalPrice);
-
-        if (this.k4RemoteCountDisplay) this.k4RemoteCountDisplay.value = k5RemoteCount;
-        const remoteBtnsDisabled = k5ActiveMode !== 'remote';
+        // [REFACTORED] Render counter values and button states from the new 'drive...' state variables
+        if (this.k4RemoteCountDisplay) this.k4RemoteCountDisplay.value = driveRemoteCount;
+        const remoteBtnsDisabled = driveAccessoryMode !== 'remote';
         if (this.k4RemoteAddBtn) this.k4RemoteAddBtn.disabled = remoteBtnsDisabled;
         if (this.k4RemoteSubtractBtn) this.k4RemoteSubtractBtn.disabled = remoteBtnsDisabled;
 
-        if (this.k4ChargerCountDisplay) this.k4ChargerCountDisplay.value = k5ChargerCount;
-        const chargerBtnsDisabled = k5ActiveMode !== 'charger';
+        if (this.k4ChargerCountDisplay) this.k4ChargerCountDisplay.value = driveChargerCount;
+        const chargerBtnsDisabled = driveAccessoryMode !== 'charger';
         if (this.k4ChargerAddBtn) this.k4ChargerAddBtn.disabled = chargerBtnsDisabled;
         if (this.k4ChargerSubtractBtn) this.k4ChargerSubtractBtn.disabled = chargerBtnsDisabled;
 
-        if (this.k4CordCountDisplay) this.k4CordCountDisplay.value = k5CordCount;
-        const cordBtnsDisabled = k5ActiveMode !== 'cord';
+        if (this.k4CordCountDisplay) this.k4CordCountDisplay.value = driveCordCount;
+        const cordBtnsDisabled = driveAccessoryMode !== 'cord';
         if (this.k4CordAddBtn) this.k4CordAddBtn.disabled = cordBtnsDisabled;
         if (this.k4CordSubtractBtn) this.k4CordSubtractBtn.disabled = cordBtnsDisabled;
 
         if (this.k4TotalDisplay) {
-            this.k4TotalDisplay.value = formatPrice(k5GrandTotal);
+            this.k4TotalDisplay.value = formatPrice(driveGrandTotal);
         }
 
         // --- K5 (Dual/Chain & Summary) Button Active/Disabled States ---
         if (this.k5DualButton) {
-            const isDisabled = k4ActiveMode !== null && k4ActiveMode !== 'dual';
-            this.k5DualButton.classList.toggle('active', k4ActiveMode === 'dual');
+            // [REFACTORED] Check against the new 'dualChainMode' state
+            const isDisabled = dualChainMode !== null && dualChainMode !== 'dual';
+            this.k5DualButton.classList.toggle('active', dualChainMode === 'dual');
             this.k5DualButton.disabled = isDisabled;
         }
         if (this.k5ChainButton) {
-            const isDisabled = k4ActiveMode !== null && k4ActiveMode !== 'chain';
-            this.k5ChainButton.classList.toggle('active', k4ActiveMode === 'chain');
+            // [REFACTORED] Check against the new 'dualChainMode' state
+            const isDisabled = dualChainMode !== null && dualChainMode !== 'chain';
+            this.k5ChainButton.classList.toggle('active', dualChainMode === 'chain');
             this.k5ChainButton.disabled = isDisabled;
         }
         
         // --- K5 Input and Price Display ---
         if (this.k5InputDisplay) {
-            const isChainInputActive = k4ActiveMode === 'chain' && targetCell && targetCell.column === 'chain';
+            // [REFACTORED] Check against the new 'dualChainMode' state
+            const isChainInputActive = dualChainMode === 'chain' && targetCell && targetCell.column === 'chain';
             this.k5InputDisplay.disabled = !isChainInputActive;
             this.k5InputDisplay.classList.toggle('active', isChainInputActive);
-            if (this.k5InputDisplay.value !== chainInputValue) {
-                this.k5InputDisplay.value = chainInputValue;
+            // [REFACTORED] Read from the new 'dualChainInputValue' state
+            if (this.k5InputDisplay.value !== dualChainInputValue) {
+                this.k5InputDisplay.value = dualChainInputValue;
             }
         }
         if (this.k5DualPriceValue) {
-            const newText = (typeof k4DualPrice === 'number') ? `$${k4DualPrice.toFixed(2)}` : '';
+            // [REFACTORED] Read from the new 'dualPrice' state
+            const newText = (typeof dualPrice === 'number') ? `$${dualPrice.toFixed(2)}` : '';
             if (this.k5DualPriceValue.textContent !== newText) {
                 this.k5DualPriceValue.textContent = newText;
             }
         }
         
+        // [REFACTORED] Render K5 summary display values from the new 'summary...' state variables
         if (this.k5WinderSummaryDisplay) {
-            this.k5WinderSummaryDisplay.value = formatPrice(k5WinderSummaryValue);
+            this.k5WinderSummaryDisplay.value = formatPrice(summaryWinderPrice);
         }
         if (this.k5MotorSummaryDisplay) {
-            this.k5MotorSummaryDisplay.value = formatPrice(k5MotorSummaryValue);
+            this.k5MotorSummaryDisplay.value = formatPrice(summaryMotorPrice);
         }
-
-        // [NEW] Render new K5 Summary Display values
         if (this.k5RemoteSummaryDisplay) {
-            this.k5RemoteSummaryDisplay.value = formatPrice(k5RemoteSummaryValue);
+            this.k5RemoteSummaryDisplay.value = formatPrice(summaryRemotePrice);
         }
         if (this.k5ChargerSummaryDisplay) {
-            this.k5ChargerSummaryDisplay.value = formatPrice(k5ChargerSummaryValue);
+            this.k5ChargerSummaryDisplay.value = formatPrice(summaryChargerPrice);
         }
         if (this.k5CordSummaryDisplay) {
-            this.k5CordSummaryDisplay.value = formatPrice(k5CordSummaryValue);
+            this.k5CordSummaryDisplay.value = formatPrice(summaryCordPrice);
         }
         if (this.k5AccessoriesTotalDisplay) {
-            this.k5AccessoriesTotalDisplay.value = formatPrice(k5AccessoriesTotalValue);
+            this.k5AccessoriesTotalDisplay.value = formatPrice(summaryAccessoriesTotal);
         }
     }
 }
