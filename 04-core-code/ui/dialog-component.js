@@ -20,11 +20,10 @@ export class DialogComponent {
     }
 
     initialize() {
-        // --- Keep old event for backward compatibility, but adapt to new grid format ---
         this.eventAggregator.subscribe('showLoadConfirmationDialog', () => {
             this.show({
                 message: 'The current quote contains unsaved data. What would you like to do?',
-                layout: [ // Use the new layout format
+                layout: [
                     [
                         { type: 'button', text: 'Save then Load', callback: () => this.eventAggregator.publish('userChoseSaveThenLoad'), colspan: 1 },
                         { type: 'button', text: 'Load Directly', callback: () => this.eventAggregator.publish('userChoseLoadDirectly'), colspan: 1 },
@@ -56,7 +55,6 @@ export class DialogComponent {
             this.messageElement.textContent = message;
         }
 
-        // [REFACTORED] Build the grid layout dynamically
         layout.forEach(row => {
             row.forEach(cellConfig => {
                 const cell = document.createElement('div');
@@ -67,7 +65,8 @@ export class DialogComponent {
                     const button = document.createElement('button');
                     button.className = 'dialog-button';
                     if (cellConfig.className) {
-                        button.classList.add(cellConfig.className);
+                        // [BUG FIX] Use spread operator to handle multiple space-separated class names
+                        button.classList.add(...cellConfig.className.split(' '));
                     }
                     button.textContent = cellConfig.text;
                     
@@ -84,8 +83,9 @@ export class DialogComponent {
                     cell.textContent = cellConfig.text;
                 }
                 
-                if (cellConfig.className) {
-                    cell.classList.add(cellConfig.className);
+                if (cellConfig.className && cellConfig.type !== 'button') {
+                    // [BUG FIX] Also apply the robust class adding logic to the cell container itself
+                     cell.classList.add(...cellConfig.className.split(' '));
                 }
 
                 if (cellConfig.colspan) {
@@ -96,11 +96,10 @@ export class DialogComponent {
             });
         });
 
-        // [NEW] Adjust dialog position based on config
         if (position === 'bottomThird') {
             this.dialogBox.style.marginTop = `calc( (100vh - 20vh) / 3 * 2 - 50% )`;
         } else {
-            this.dialogBox.style.marginTop = ''; // Revert to default centered position
+            this.dialogBox.style.marginTop = '';
         }
 
         this.overlay.classList.remove('is-hidden');
