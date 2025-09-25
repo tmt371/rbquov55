@@ -329,7 +329,8 @@
 .k5-grid-layout {
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Space between rows */
+    gap: 5px; /* [MODIFIED] Task 2: Row spacing reduced by 50% from 10px */
+    font-size: 0.8em; /* [MODIFIED] Task 1: Font size reduced to 80% for all children */
 }
 
 .k5-grid-row {
@@ -347,28 +348,33 @@
     gap: 8px;
 }
 
+/* [REMOVED] Removed fixed-width rules for specific cells below */
 .k5-grid-cell-a,
 .k5-grid-cell-c {
-    flex-basis: 100px; /* Give buttons a fixed base width */
-    flex-shrink: 0;
+    /* flex-basis: 100px; */ /* Removed */
+    /* flex-shrink: 0; */   /* Removed */
 }
-
 .k5-grid-cell-b,
 .k5-grid-cell-d {
-    flex-grow: 1; /* Allow display/input to take remaining space */
+    /* flex-grow: 1; */ /* Removed in favor of the new generic rule */
 }
-
 .k5-grid-cell-label {
-    flex-basis: 100px;
-    flex-shrink: 0;
+    /* flex-basis: 100px; */ /* Removed */
+    /* flex-shrink: 0; */   /* Removed */
     font-weight: bold;
     text-align: center;
-    font-size: 0.9em;
+    font-size: 1em; /* Adjusted to inherit the new 0.8em base correctly */
+}
+.k5-grid-cell-display {
+    /* flex-grow: 1; */ /* Removed in favor of the new generic rule */
 }
 
-.k5-grid-cell-display {
-    flex-grow: 1;
+/* [NEW] Task 1: New generic rule to make all direct div children of a group have equal width */
+.k5-grid-group > div {
+    flex: 1; /* This shorthand ensures items grow and shrink equally from a base of 0 */
+    min-width: 0; /* Important for preventing overflow with long content */
 }
+
 
 .k5-summary-display-box {
     text-align: right;
