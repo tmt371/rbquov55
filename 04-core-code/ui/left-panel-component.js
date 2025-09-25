@@ -11,22 +11,18 @@ export class LeftPanelComponent {
         this.panelElement = panelElement;
 
         // --- DOM Element References within the Left Panel ---
-        // K1 Panel
         this.locationButton = document.getElementById('btn-focus-location');
         this.locationInput = document.getElementById('location-input-box');
         
-        // K2 Panel
         this.fabricColorButton = document.getElementById('btn-focus-fabric');
         this.lfButton = document.getElementById('btn-light-filter');
         this.lfDelButton = document.getElementById('btn-lf-del');
 
-        // K3 Panel
         this.k3EditButton = document.getElementById('btn-k3-edit');
         this.k3OverButton = document.getElementById('btn-batch-cycle-over');
         this.k3OiButton = document.getElementById('btn-batch-cycle-oi');
         this.k3LrButton = document.getElementById('btn-batch-cycle-lr');
         
-        // K4 Panel (Drive/Accessories)
         this.k4WinderButton = document.getElementById('btn-k5-winder');
         this.k4MotorButton = document.getElementById('btn-k5-motor');
         this.k4RemoteButton = document.getElementById('btn-k5-remote');
@@ -51,7 +47,6 @@ export class LeftPanelComponent {
 
         this.k4TotalDisplay = document.getElementById('k5-display-total');
 
-        // K5 Panel (Dual/Chain & Summary)
         this.k5DualButton = document.getElementById('btn-k4-dual');
         this.k5ChainButton = document.getElementById('btn-k4-chain');
         this.k5InputDisplay = document.getElementById('k4-input-display');
@@ -78,7 +73,6 @@ export class LeftPanelComponent {
     }
 
     _updateTabStates(uiState) {
-        // [REFACTORED] Read new semantic state variables
         const { activeEditMode, activeTabId, dualChainMode, driveAccessoryMode } = uiState;
         const isInEditMode = activeEditMode !== null || dualChainMode !== null || driveAccessoryMode !== null;
 
@@ -88,7 +82,6 @@ export class LeftPanelComponent {
         this.tabButtons.forEach(button => {
             const isThisButtonActive = button.id === activeTabId;
             button.classList.toggle('active', isThisButtonActive);
-            // Disable other tabs if any edit mode is active
             button.disabled = isInEditMode && !isThisButtonActive;
         });
 
@@ -108,7 +101,6 @@ export class LeftPanelComponent {
     }
 
     _updatePanelButtonStates(uiState, quoteData) {
-        // [REFACTORED] Destructure all the new semantic state variables from uiState
         const { 
             activeEditMode, locationInputValue, lfModifiedRowIndexes, 
             dualChainMode, dualPrice, targetCell, dualChainInputValue,
@@ -141,12 +133,14 @@ export class LeftPanelComponent {
         if (this.lfButton) this.lfButton.classList.toggle('active', isLFSelectMode);
         if (this.lfDelButton) this.lfDelButton.classList.toggle('active', isLFDeleteMode);
 
-        const hasBO1 = rollerBlindItems.some(item => item.fabricType === 'BO1');
+        // [BUG FIX] Changed variable name and updated check from 'BO1' to 'B2'
+        const hasB2 = rollerBlindItems.some(item => item.fabricType === 'B2');
         const hasLFModified = lfModifiedRowIndexes.size > 0;
 
         if (this.locationButton) this.locationButton.disabled = isAnyK2ModeActive;
         if (this.fabricColorButton) this.fabricColorButton.disabled = activeEditMode !== null && !isFCMode;
-        if (this.lfButton) this.lfButton.disabled = (activeEditMode !== null && !isLFSelectMode) || !hasBO1;
+        // [BUG FIX] Updated condition to check for hasB2 instead of hasBO1
+        if (this.lfButton) this.lfButton.disabled = (activeEditMode !== null && !isLFSelectMode) || !hasB2;
         if (this.lfDelButton) this.lfDelButton.disabled = (activeEditMode !== null && !isLFDeleteMode) || !hasLFModified;
 
         // --- K3 Button Active/Disabled States ---
@@ -171,25 +165,21 @@ export class LeftPanelComponent {
             { el: this.k4CordButton, mode: 'cord' }
         ];
         
-        // [REFACTORED] Check against the new 'driveAccessoryMode' state
         const isAnyK4ModeActive = driveAccessoryMode !== null;
         k4Buttons.forEach(({ el, mode }) => {
             if (el) {
-                // [REFACTORED] Check against the new 'driveAccessoryMode' state
                 const isActive = driveAccessoryMode === mode;
                 el.classList.toggle('active', isActive);
                 el.disabled = isAnyK4ModeActive && !isActive;
             }
         });
         
-        // [REFACTORED] Render display values from the new 'drive...' state variables
         if (this.k4WinderDisplay) this.k4WinderDisplay.value = formatPrice(driveWinderTotalPrice);
         if (this.k4MotorDisplay) this.k4MotorDisplay.value = formatPrice(driveMotorTotalPrice);
         if (this.k4RemoteDisplay) this.k4RemoteDisplay.value = formatPrice(driveRemoteTotalPrice);
         if (this.k4ChargerDisplay) this.k4ChargerDisplay.value = formatPrice(driveChargerTotalPrice);
         if (this.k4CordDisplay) this.k4CordDisplay.value = formatPrice(driveCordTotalPrice);
 
-        // [REFACTORED] Render counter values and button states from the new 'drive...' state variables
         if (this.k4RemoteCountDisplay) this.k4RemoteCountDisplay.value = driveRemoteCount;
         const remoteBtnsDisabled = driveAccessoryMode !== 'remote';
         if (this.k4RemoteAddBtn) this.k4RemoteAddBtn.disabled = remoteBtnsDisabled;
@@ -211,13 +201,11 @@ export class LeftPanelComponent {
 
         // --- K5 (Dual/Chain & Summary) Button Active/Disabled States ---
         if (this.k5DualButton) {
-            // [REFACTORED] Check against the new 'dualChainMode' state
             const isDisabled = dualChainMode !== null && dualChainMode !== 'dual';
             this.k5DualButton.classList.toggle('active', dualChainMode === 'dual');
             this.k5DualButton.disabled = isDisabled;
         }
         if (this.k5ChainButton) {
-            // [REFACTORED] Check against the new 'dualChainMode' state
             const isDisabled = dualChainMode !== null && dualChainMode !== 'chain';
             this.k5ChainButton.classList.toggle('active', dualChainMode === 'chain');
             this.k5ChainButton.disabled = isDisabled;
@@ -225,24 +213,20 @@ export class LeftPanelComponent {
         
         // --- K5 Input and Price Display ---
         if (this.k5InputDisplay) {
-            // [REFACTORED] Check against the new 'dualChainMode' state
             const isChainInputActive = dualChainMode === 'chain' && targetCell && targetCell.column === 'chain';
             this.k5InputDisplay.disabled = !isChainInputActive;
             this.k5InputDisplay.classList.toggle('active', isChainInputActive);
-            // [REFACTORED] Read from the new 'dualChainInputValue' state
             if (this.k5InputDisplay.value !== dualChainInputValue) {
                 this.k5InputDisplay.value = dualChainInputValue;
             }
         }
         if (this.k5DualPriceValue) {
-            // [REFACTORED] Read from the new 'dualPrice' state
             const newText = (typeof dualPrice === 'number') ? `$${dualPrice.toFixed(2)}` : '';
             if (this.k5DualPriceValue.textContent !== newText) {
                 this.k5DualPriceValue.textContent = newText;
             }
         }
         
-        // [REFACTORED] Render K5 summary display values from the new 'summary...' state variables
         if (this.k5WinderSummaryDisplay) {
             this.k5WinderSummaryDisplay.value = formatPrice(summaryWinderPrice);
         }
