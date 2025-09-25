@@ -45,8 +45,6 @@ export class AppController {
         this.eventAggregator.subscribe('userChoseSaveThenLoad', () => delegate('handleSaveThenLoad'));
         this.eventAggregator.subscribe('typeCellLongPressed', (data) => delegate('handleTypeCellLongPress', data));
         this.eventAggregator.subscribe('typeButtonLongPressed', (data) => delegate('handleTypeButtonLongPress', data));
-
-        // [NEW] Add subscription for the new T-Set event
         this.eventAggregator.subscribe('userRequestedMultiTypeSet', () => delegate('handleMultiTypeSet'));
     }
 
@@ -136,7 +134,8 @@ export class AppController {
     _handleFileLoad({ fileName, content }) {
         const result = this.fileService.parseFileContent(fileName, content);
         if (result.success) {
-            this.quoteData = result.data;
+            // [BUG FIX] Correctly assign loaded data to the quoteService, not 'this'.
+            this.quoteService.quoteData = result.data;
             this.uiService.reset(initialState.ui);
             this.uiService.setSumOutdated(true);
             this._publishStateChange();
