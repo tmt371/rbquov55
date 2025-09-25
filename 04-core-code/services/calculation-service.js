@@ -2,7 +2,7 @@
 
 /**
  * @fileoverview Service for handling all price and sum calculations.
- * Encapsulates the business logic for pricing items and handling errors.
+ * Acts as a generic executor that delegates product-specific logic to a strategy.
  */
 export class CalculationService {
     constructor({ productFactory, configManager }) {
@@ -13,10 +13,6 @@ export class CalculationService {
 
     /**
      * Calculates line prices for all valid items and the total sum using a provided product strategy.
-     * Skips items with errors and returns the first error found.
-     * @param {object} quoteData The current quote data from QuoteService.
-     * @param {object} productStrategy The specific product strategy to use for calculations.
-     * @returns {{updatedQuoteData: object, firstError: object|null}}
      */
     calculateAndSum(quoteData, productStrategy) {
         if (!productStrategy) {
@@ -64,39 +60,40 @@ export class CalculationService {
         return { updatedQuoteData, firstError };
     }
 
-    calculateDualPrice(items) {
-        const dualCount = items.filter(item => item.dual === 'D').length;
-        const pricePerPair = 15;
-        const totalPrice = Math.floor(dualCount / 2) * pricePerPair;
-        return totalPrice;
-    }
+    // [NEW] Generic bridge method to calculate any accessory price via the strategy pattern.
+    calculateAccessoryPrice(productType, accessoryName, data) {
+        const productStrategy = this.productFactory.getProductStrategy(productType);
+        if (!productStrategy) return 0;
 
-    // --- K5 Accessory Calculation Methods ---
+        const priceKeyMap = {
+            'dual': 'comboBracket',
+            'winder': 'winderHD',
+            'motor': 'motorStandard',
+            'remote': 'remoteStandard',
+            'charger': 'chargerStandard',
+            'cord': 'cord3m'
+        };
+        const priceKey = priceKeyMap[accessoryName];
+        if (!priceKey) return 0;
 
-    calculateWinderPrice(items) {
-        const count = items.filter(item => item.winder === 'HD').length;
-        const pricePerUnit = this.configManager.getAccessoryPrice('winderHD');
-        return count * pricePerUnit;
-    }
+        const pricePerUnit = this.configManager.getAccessoryPrice(priceKey);
+        if (pricePerUnit === null) return 0;
 
-    calculateMotorPrice(items) {
-        const count = items.filter(item => !!item.motor).length;
-        const pricePerUnit = this.configManager.getAccessoryPrice('motorStandard');
-        return count * pricePerUnit;
-    }
+        const methodNameMap = {
+            'dual': 'calculateDualPrice',
+            'winder': 'calculateWinderPrice',
+            'motor': 'calculateMotorPrice',
+            'remote': 'calculateRemotePrice',
+            'charger': 'calculateChargerPrice',
+            'cord': 'calculateCordPrice'
+        };
+        const methodName = methodNameMap[accessoryName];
+        
+        if (productStrategy[methodName]) {
+            const args = (data.items) ? [data.items, pricePerUnit] : [data.count, pricePerUnit];
+            return productStrategy[methodName](...args);
+        }
 
-    calculateRemotePrice(count) {
-        const pricePerUnit = this.configManager.getAccessoryPrice('remoteStandard');
-        return count * pricePerUnit;
-    }
-
-    calculateChargerPrice(count) {
-        const pricePerUnit = this.configManager.getAccessoryPrice('chargerStandard');
-        return count * pricePerUnit;
-    }
-
-    calculateCordPrice(count) {
-        const pricePerUnit = this.configManager.getAccessoryPrice('cord3m');
-        return count * pricePerUnit;
+        return 0;
     }
 }

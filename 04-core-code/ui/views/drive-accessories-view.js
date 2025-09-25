@@ -18,29 +18,22 @@ export class DriveAccessoriesView {
     }
 
     handleModeChange({ mode }) {
-        // [REFACTORED] Read the new semantic state 'driveAccessoryMode'
         const currentMode = this.uiService.getState().driveAccessoryMode;
         const newMode = currentMode === mode ? null : mode;
 
-        // --- Logic on EXITING a mode ---
         if (currentMode) {
-            // [REFACTORED] Call the renamed calculation method
             this._recalculateAllDriveAccessoryPrices();
         }
         
-        // [REFACTORED] Set the new semantic state 'driveAccessoryMode'
         this.uiService.setDriveAccessoryMode(newMode);
 
-        // --- Logic on ENTERING a new mode ---
         if (newMode) {
             const message = this._getHintMessage(newMode);
             this.eventAggregator.publish('showNotification', { message });
 
-            // Special logic for auto-setting counts
             const items = this.quoteService.getItems();
             const hasMotor = items.some(item => !!item.motor);
             if (hasMotor) {
-                // [REFACTORED] Read and set using new semantic state names
                 if (newMode === 'remote' && this.uiService.getState().driveRemoteCount === 0) {
                     this.uiService.setDriveAccessoryCount('remote', 1);
                 }
@@ -54,7 +47,6 @@ export class DriveAccessoriesView {
     }
 
     handleTableCellClick({ rowIndex, column }) {
-        // [REFACTORED] Read the new semantic state 'driveAccessoryMode'
         const { driveAccessoryMode } = this.uiService.getState();
         if (!driveAccessoryMode || (column !== 'winder' && column !== 'motor')) return;
 
@@ -93,7 +85,6 @@ export class DriveAccessoriesView {
     
     handleCounterChange({ accessory, direction }) {
         const state = this.uiService.getState();
-        // [REFACTORED] Read counts from new semantic state variables
         const counts = {
             remote: state.driveRemoteCount,
             charger: state.driveChargerCount,
@@ -102,7 +93,6 @@ export class DriveAccessoriesView {
         let currentCount = counts[accessory];
         const newCount = direction === 'add' ? currentCount + 1 : Math.max(0, currentCount - 1);
 
-        // Special logic for reducing to zero
         if (newCount === 0) {
             const items = this.quoteService.getItems();
             const hasMotor = items.some(item => !!item.motor);
@@ -112,18 +102,16 @@ export class DriveAccessoriesView {
                     message: `系統偵測到有電動馬達，確定不要${accessoryName}？`,
                     buttons: [
                         { text: '確定不要', callback: () => {
-                            // [REFACTORED] Set count using new semantic method
                             this.uiService.setDriveAccessoryCount(accessory, 0);
                             this.publish();
                         }},
                         { text: '取消', className: 'secondary', callback: () => {} }
                     ]
                 });
-                return; // Prevent update until user confirms
+                return; 
             }
         }
         
-        // [REFACTORED] Set count using new semantic method
         this.uiService.setDriveAccessoryCount(accessory, newCount);
         this.publish();
     }
@@ -142,57 +130,44 @@ export class DriveAccessoriesView {
         this.publish();
     }
     
-    // [REFACTORED] Renamed method from _recalculateAllK5Prices
     _recalculateAllDriveAccessoryPrices() {
         const items = this.quoteService.getItems();
         const state = this.uiService.getState();
+        const productType = this.quoteService.getCurrentProductType();
         const summaryData = {};
         let grandTotal = 0;
 
-        // Winder
-        const winderPrice = this.calculationService.calculateWinderPrice(items);
+        // [REFACTORED] All calls now use the new generic bridge method on the calculation service.
+        const winderPrice = this.calculationService.calculateAccessoryPrice(productType, 'winder', { items });
         const winderCount = items.filter(item => item.winder === 'HD').length;
-        // [REFACTORED] Set total price using new semantic method
         this.uiService.setDriveAccessoryTotalPrice('winder', winderPrice);
         summaryData.winder = { count: winderCount, price: winderPrice };
         grandTotal += winderPrice;
 
-        // Motor
-        const motorPrice = this.calculationService.calculateMotorPrice(items);
+        const motorPrice = this.calculationService.calculateAccessoryPrice(productType, 'motor', { items });
         const motorCount = items.filter(item => !!item.motor).length;
-        // [REFACTORED] Set total price using new semantic method
         this.uiService.setDriveAccessoryTotalPrice('motor', motorPrice);
         summaryData.motor = { count: motorCount, price: motorPrice };
         grandTotal += motorPrice;
         
-        // Remote
-        // [REFACTORED] Read count from new semantic state variable
         const remoteCount = state.driveRemoteCount;
-        const remotePrice = this.calculationService.calculateRemotePrice(remoteCount);
-        // [REFACTORED] Set total price using new semantic method
+        const remotePrice = this.calculationService.calculateAccessoryPrice(productType, 'remote', { count: remoteCount });
         this.uiService.setDriveAccessoryTotalPrice('remote', remotePrice);
         summaryData.remote = { type: 'standard', count: remoteCount, price: remotePrice };
         grandTotal += remotePrice;
 
-        // Charger
-        // [REFACTORED] Read count from new semantic state variable
         const chargerCount = state.driveChargerCount;
-        const chargerPrice = this.calculationService.calculateChargerPrice(chargerCount);
-        // [REFACTORED] Set total price using new semantic method
+        const chargerPrice = this.calculationService.calculateAccessoryPrice(productType, 'charger', { count: chargerCount });
         this.uiService.setDriveAccessoryTotalPrice('charger', chargerPrice);
         summaryData.charger = { count: chargerCount, price: chargerPrice };
         grandTotal += chargerPrice;
 
-        // Cord
-        // [REFACTORED] Read count from new semantic state variable
         const cordCount = state.driveCordCount;
-        const cordPrice = this.calculationService.calculateCordPrice(cordCount);
-        // [REFACTORED] Set total price using new semantic method
+        const cordPrice = this.calculationService.calculateAccessoryPrice(productType, 'cord', { count: cordCount });
         this.uiService.setDriveAccessoryTotalPrice('cord', cordPrice);
         summaryData.cord3m = { count: cordCount, price: cordPrice };
         grandTotal += cordPrice;
 
-        // [REFACTORED] Set grand total using new semantic method
         this.uiService.setDriveGrandTotal(grandTotal);
         this.quoteService.updateAccessorySummary(summaryData);
     }

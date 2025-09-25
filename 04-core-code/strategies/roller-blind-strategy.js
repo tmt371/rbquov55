@@ -79,4 +79,38 @@ export class RollerBlindStrategy {
             motor: ''           // K4: 電動馬達 (B-motor / '')
         };
     }
+
+    // --- [NEW] Accessory Pricing Logic ---
+    // The following methods are migrated from calculation-service.js
+    // They now contain the product-specific LOGIC (e.g., how to count items).
+    // The price value itself is passed in by the caller.
+
+    calculateDualPrice(items, pricePerPair) {
+        const dualCount = items.filter(item => item.dual === 'D').length;
+        // The logic that "dual must be in pairs" is a business rule for this product.
+        const totalPrice = Math.floor(dualCount / 2) * pricePerPair;
+        return totalPrice;
+    }
+
+    calculateWinderPrice(items, pricePerUnit) {
+        const count = items.filter(item => item.winder === 'HD').length;
+        return count * pricePerUnit;
+    }
+
+    calculateMotorPrice(items, pricePerUnit) {
+        const count = items.filter(item => !!item.motor).length;
+        return count * pricePerUnit;
+    }
+
+    calculateRemotePrice(count, pricePerUnit) {
+        return count * pricePerUnit;
+    }
+
+    calculateChargerPrice(count, pricePerUnit) {
+        return count * pricePerUnit;
+    }
+
+    calculateCordPrice(count, pricePerUnit) {
+        return count * pricePerUnit;
+    }
 }

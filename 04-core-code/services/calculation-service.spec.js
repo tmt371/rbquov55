@@ -3,7 +3,7 @@
 import { CalculationService } from './calculation-service.js';
 
 // --- Mock Dependencies ---
-// 我們需要模擬 CalculationService 所依賴的模組
+// [REFACTORED] The mock strategy now reflects a more complex role.
 const mockProductStrategy = {
     calculatePrice: jest.fn((item, priceMatrix) => {
         if (!item.width || !item.height) {
@@ -12,89 +12,108 @@ const mockProductStrategy = {
         if (item.width > 3000) {
             return { price: null, error: 'Width exceeds maximum.' };
         }
-        // 簡化版的計價邏輯，僅用於測試
+        // A simplified pricing logic for testing the main calculation loop.
         return { price: item.width * 0.1 + item.height * 0.2 };
-    })
+    }),
+    // [REFACTORED] Mock the new accessory calculation methods that were moved to the strategy.
+    calculateDualPrice: jest.fn(() => 10), // Mocked to return a fixed price
+    calculateWinderPrice: jest.fn(() => 30),
+    calculateMotorPrice: jest.fn(() => 250),
+    calculateRemotePrice: jest.fn(() => 100),
+    calculateChargerPrice: jest.fn(() => 50),
+    calculateCordPrice: jest.fn(() => 15)
 };
 
 const mockConfigManager = {
-    getPriceMatrix: jest.fn(() => ({
-        // 回傳一個假的價格矩陣，內容不重要，因為計價邏輯已被 mock
-    }))
+    getPriceMatrix: jest.fn(() => ({})), // Returns a dummy matrix
+    // [REFACTORED] The service no longer calls this directly for accessories.
+    getAccessoryPrice: jest.fn() 
 };
 
 // --- Test Suite ---
-describe('CalculationService', () => {
+describe('CalculationService (Refactored)', () => {
     let calculationService;
 
     beforeEach(() => {
-        // 在每個測試案例執行前，都建立一個新的 CalculationService 實例
         calculationService = new CalculationService({
-            productFactory: null, // 在這個測試中用不到
+            productFactory: null,
             configManager: mockConfigManager
         });
         
-        // 清除 mock 函數的歷史紀錄
-        mockProductStrategy.calculatePrice.mockClear();
+        // Clear history of all mock functions before each test
+        Object.values(mockProductStrategy).forEach(mockFn => mockFn.mockClear());
         mockConfigManager.getPriceMatrix.mockClear();
     });
-
-    it('should correctly calculate and sum prices for valid items', () => {
+    
+    // [REFACTORED] This test is still valid as the main loop logic hasn't changed.
+    it('should correctly calculate and sum prices for valid items using the product strategy', () => {
         const quoteData = {
             rollerBlindItems: [
                 { width: 1000, height: 1000, fabricType: 'BO', linePrice: null },
                 { width: 2000, height: 1500, fabricType: 'BO', linePrice: null },
                 { width: null, height: null, fabricType: null, linePrice: null }
             ],
-            summary: { totalSum: 0 }
+            summary: { 
+                totalSum: 0,
+                // Simulate existing accessory prices
+                accessories: {
+                    winder: { price: 30 },
+                    motor: { price: 250 }
+                }
+            }
         };
 
         const { updatedQuoteData, firstError } = calculationService.calculateAndSum(quoteData, mockProductStrategy);
 
-        // 驗證總價
-        // 1000*0.1 + 1000*0.2 = 300
-        // 2000*0.1 + 1500*0.2 = 500
-        // total = 800
-        expect(updatedQuoteData.summary.totalSum).toBe(800);
+        // Verify the total sum includes item prices and pre-existing accessory prices.
+        // Item 1: 1000*0.1 + 1000*0.2 = 300
+        // Item 2: 2000*0.1 + 1500*0.2 = 500
+        // Accessories: 30 + 250 = 280
+        // Total = 300 + 500 + 280 = 1080
+        expect(updatedQuoteData.summary.totalSum).toBe(1080);
 
-        // 驗證各行的價格
+        // Verify individual line prices are set correctly.
         expect(updatedQuoteData.rollerBlindItems[0].linePrice).toBe(300);
         expect(updatedQuoteData.rollerBlindItems[1].linePrice).toBe(500);
 
-        // 驗證沒有錯誤回報
+        // Verify no error was returned.
         expect(firstError).toBeNull();
 
-        // 驗證依賴項的方法有被正確呼叫
+        // Verify the dependencies were called as expected.
         expect(mockConfigManager.getPriceMatrix).toHaveBeenCalledTimes(2);
         expect(mockProductStrategy.calculatePrice).toHaveBeenCalledTimes(2);
     });
 
-    it('should return the first error encountered and skip invalid items', () => {
+    // [REFACTORED] This test is also still valid.
+    it('should return the first error encountered and still sum valid items', () => {
         const quoteData = {
             rollerBlindItems: [
                 { width: 1000, height: 1000, fabricType: 'BO', linePrice: null },
-                { width: 4000, height: 1500, fabricType: 'BO', linePrice: null }, // 錯誤行
-                { width: 2000, height: 2000, fabricType: 'BO', linePrice: null }  // 應被計算
+                { width: 4000, height: 1500, fabricType: 'BO', linePrice: null }, // This line will cause an error.
+                { width: 2000, height: 2000, fabricType: 'BO', linePrice: null }  // This line should still be calculated.
             ],
-            summary: { totalSum: 0 }
+            summary: { totalSum: 0, accessories: {} }
         };
 
         const { updatedQuoteData, firstError } = calculationService.calculateAndSum(quoteData, mockProductStrategy);
 
-        // 驗證總價只包含有效行的總和
-        // 1000*0.1 + 1000*0.2 = 300
-        // 2000*0.1 + 2000*0.2 = 600
-        // total = 900
+        // Verify the total sum only includes valid items.
+        // Item 1: 1000*0.1 + 1000*0.2 = 300
+        // Item 3: 2000*0.1 + 2000*0.2 = 600
+        // Total = 300 + 600 = 900
         expect(updatedQuoteData.summary.totalSum).toBe(900);
 
-        // 驗證第一行價格正確，第二行價格為 null
+        // Verify line prices. The error line should have a null price.
         expect(updatedQuoteData.rollerBlindItems[0].linePrice).toBe(300);
         expect(updatedQuoteData.rollerBlindItems[1].linePrice).toBeNull();
         expect(updatedQuoteData.rollerBlindItems[2].linePrice).toBe(600);
 
-        // 驗證回報了第一個遇到的錯誤
+        // Verify the correct error was reported.
         expect(firstError).not.toBeNull();
         expect(firstError.rowIndex).toBe(1);
         expect(firstError.message).toContain('Width exceeds maximum.');
     });
+
+    // [REMOVED] Tests for individual accessory calculations are no longer relevant here.
+    // They should be part of the test suite for the strategy file (e.g., roller-blind-strategy.spec.js).
 });
