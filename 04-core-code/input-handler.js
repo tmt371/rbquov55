@@ -6,6 +6,9 @@ export class InputHandler {
     constructor(eventAggregator) {
         this.eventAggregator = eventAggregator;
         this.leftPanelHandler = new LeftPanelInputHandler(eventAggregator);
+        this.longPressTimer = null;
+        this.pressThreshold = 500; // 500ms for a long press
+        this.isLongPress = false;
     }
 
     initialize() {
@@ -16,7 +19,6 @@ export class InputHandler {
         this._setupFileLoader();
         this._setupPhysicalKeyboard();
         
-        // Delegate left panel event setup to the specialized handler
         this.leftPanelHandler.initialize();
     }
 
@@ -116,16 +118,47 @@ export class InputHandler {
         }
     }
     
+    // [REFACTORED] Updated to handle both simple clicks and long-press events
     _setupNumericKeyboard() {
         const keyboard = document.getElementById('numeric-keyboard');
         if (!keyboard) return;
 
+        // Generic long-press handler for a button
+        const addLongPressSupport = (button, longPressEventName, clickEventName, data = {}) => {
+            const startPress = (e) => {
+                e.preventDefault();
+                this.isLongPress = false;
+                this.longPressTimer = setTimeout(() => {
+                    this.isLongPress = true;
+                    this.eventAggregator.publish(longPressEventName, data);
+                }, this.pressThreshold);
+            };
+
+            const endPress = (e) => {
+                clearTimeout(this.longPressTimer);
+                if (!this.isLongPress && clickEventName) {
+                    this.eventAggregator.publish(clickEventName, data);
+                }
+            };
+
+            button.addEventListener('mousedown', startPress);
+            button.addEventListener('touchstart', startPress, { passive: false });
+            button.addEventListener('mouseup', endPress);
+            button.addEventListener('mouseleave', () => clearTimeout(this.longPressTimer));
+            button.addEventListener('touchend', endPress);
+        };
+        
         const addButtonListener = (id, eventName, data = {}) => {
             const button = document.getElementById(id);
-            if (button) {
-                button.addEventListener('click', () => {
-                    this.eventAggregator.publish(eventName, data);
-                });
+            if(button) {
+                // Special handling for the Type button
+                if (id === 'key-type') {
+                    addLongPressSupport(button, 'typeButtonLongPressed', 'userRequestedCycleType', data);
+                } else {
+                    button.addEventListener('click', () => {
+                        this.eventAggregator.publish(eventName, data);
+                    });
+                }
             }
         };
 
@@ -141,20 +174,42 @@ export class InputHandler {
         addButtonListener('key-0', 'numericKeyPressed', { key: '0' });
         addButtonListener('key-del', 'numericKeyPressed', { key: 'DEL' });
         addButtonListener('key-enter', 'numericKeyPressed', { key: 'ENT' });
-
         addButtonListener('key-w', 'numericKeyPressed', { key: 'W' });
         addButtonListener('key-h', 'numericKeyPressed', { key: 'H' });
-        
-        addButtonListener('key-type', 'userRequestedCycleType');
-
+        addButtonListener('key-type', 'userRequestedCycleType'); // The click part is handled in addLongPressSupport
         addButtonListener('key-clear', 'userRequestedClearRow');
         addButtonListener('key-price', 'userRequestedCalculateAndSum');
     }
 
+    // [REFACTORED] Updated to handle both simple clicks and long-press events
     _setupTableInteraction() {
         const table = document.getElementById('results-table');
         if (table) {
+            const startPress = (e) => {
+                const target = e.target;
+                if (target.tagName === 'TD' && target.dataset.column === 'TYPE') {
+                    this.isLongPress = false;
+                    this.longPressTimer = setTimeout(() => {
+                        this.isLongPress = true;
+                        const rowIndex = target.parentElement.dataset.rowIndex;
+                        this.eventAggregator.publish('typeCellLongPressed', { rowIndex: parseInt(rowIndex, 10) });
+                    }, this.pressThreshold);
+                }
+            };
+            
+            const endPress = () => {
+                clearTimeout(this.longPressTimer);
+            };
+
+            table.addEventListener('mousedown', startPress);
+            table.addEventListener('touchstart', startPress, { passive: true });
+            table.addEventListener('mouseup', endPress);
+            table.addEventListener('mouseleave', endPress, true);
+            table.addEventListener('touchend', endPress);
+
             table.addEventListener('click', (event) => {
+                if(this.isLongPress) return; // Don't fire click if a long press just happened
+
                 const target = event.target;
                 if (target.tagName === 'TD') {
                     const column = target.dataset.column;
@@ -169,29 +224,6 @@ export class InputHandler {
                     }
                 }
             });
-
-            table.addEventListener('blur', (event) => {
-                if (event.target.matches('.editable-cell-input')) {
-                    const input = event.target;
-                    this.eventAggregator.publish('editableCellBlurred', {
-                        rowIndex: parseInt(input.dataset.rowIndex, 10),
-                        column: input.dataset.column,
-                        value: input.value
-                    });
-                }
-            }, true);
-
-            table.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' && event.target.matches('.editable-cell-input')) {
-                    event.preventDefault();
-                    const input = event.target;
-                    this.eventAggregator.publish('editableCellEnterPressed', {
-                        rowIndex: parseInt(input.dataset.rowIndex, 10),
-                        column: input.dataset.column,
-                        value: input.value
-                    });
-                }
-            }, true);
         }
     }
 }

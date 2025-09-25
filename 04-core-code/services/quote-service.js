@@ -121,22 +121,6 @@ export class QuoteService {
             Object.assign(this.quoteData.summary.accessories, data);
         }
     }
-    
-    cycleItemProperty(rowIndex, property, options) {
-        const item = this._getItems()[rowIndex];
-        if (!item) return false;
-
-        const currentValue = item[property];
-        const currentIndex = options.indexOf(currentValue);
-        const nextIndex = (currentIndex + 1) % options.length;
-        const nextValue = options[nextIndex];
-
-        if (item[property] !== nextValue) {
-            item[property] = nextValue;
-            return true;
-        }
-        return false;
-    }
 
     cycleK3Property(rowIndex, column) {
         const item = this._getItems()[rowIndex];
@@ -243,16 +227,38 @@ export class QuoteService {
         const TYPE_SEQUENCE = this.configManager.getFabricTypeSequence();
         if (TYPE_SEQUENCE.length === 0) return false; 
 
-        const currentType = item.fabricType;
+        const currentType = item.fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1];
         const currentIndex = TYPE_SEQUENCE.indexOf(currentType);
         const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
         
-        if (item.fabricType !== nextType) {
-            item.fabricType = nextType;
+        return this.setItemType(rowIndex, nextType);
+    }
+
+    // [NEW] Sets the fabric type for a single, specific item.
+    setItemType(rowIndex, newType) {
+        const item = this._getItems()[rowIndex];
+        if (item && item.fabricType !== newType) {
+            item.fabricType = newType;
             item.linePrice = null;
             return true;
         }
         return false;
+    }
+
+    // [NEW] Sets the fabric type for all eligible items.
+    batchUpdateFabricType(newType) {
+        const items = this._getItems();
+        let changed = false;
+        items.forEach(item => {
+            if (item.width && item.height) {
+                if (item.fabricType !== newType) {
+                    item.fabricType = newType;
+                    item.linePrice = null;
+                    changed = true;
+                }
+            }
+        });
+        return changed;
     }
 
     reset() {

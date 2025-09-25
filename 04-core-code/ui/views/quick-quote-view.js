@@ -4,7 +4,6 @@
  * @fileoverview View module responsible for all logic related to the Quick Quote screen.
  */
 export class QuickQuoteView {
-    // [REFACTORED] Added configManager to the constructor dependency injection
     constructor({ quoteService, calculationService, focusService, fileService, uiService, eventAggregator, productFactory, configManager, publishStateChangeCallback }) {
         this.quoteService = quoteService;
         this.calculationService = calculationService;
@@ -13,7 +12,6 @@ export class QuickQuoteView {
         this.uiService = uiService;
         this.eventAggregator = eventAggregator;
         this.productFactory = productFactory;
-        // [REFACTORED] Store the configManager instance
         this.configManager = configManager;
         this.publish = publishStateChangeCallback;
         this.currentProduct = 'rollerBlind';
@@ -181,31 +179,52 @@ export class QuickQuoteView {
     }
     
     handleCycleType() {
-        const items = this.quoteService.getItems();
-        const eligibleItems = items.filter(item => item.width && item.height);
-        if (eligibleItems.length === 0) return;
-        
-        // [REFACTORED] Removed hardcoded array, now gets sequence from ConfigManager.
-        const TYPE_SEQUENCE = this.configManager.getFabricTypeSequence();
-        if (TYPE_SEQUENCE.length === 0) return; // Safety check
-
-        const firstType = eligibleItems[0].fabricType;
-        const currentIndex = TYPE_SEQUENCE.indexOf(firstType);
-        const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
-        let changed = false;
-        items.forEach(item => {
-            if (item.width && item.height) {
-                if (item.fabricType !== nextType) {
-                   item.fabricType = nextType;
-                   item.linePrice = null;
-                   changed = true;
-                }
-            }
-        });
+        const changed = this.quoteService.batchUpdateFabricType(null); // Passing null will cycle to next
         if (changed) {
             this.uiService.setSumOutdated(true);
             this.publish();
         }
+    }
+
+    // [NEW] Central logic to show the fabric type selection dialog
+    _showFabricTypeDialog(callback) {
+        const fabricTypes = this.configManager.getFabricTypeSequence();
+        if (fabricTypes.length === 0) return;
+
+        const dialogButtons = fabricTypes.map(type => ({
+            text: type,
+            callback: () => {
+                const changed = callback(type);
+                if (changed) {
+                    this.uiService.setSumOutdated(true);
+                    this.publish();
+                }
+            }
+        }));
+
+        this.eventAggregator.publish('showConfirmationDialog', {
+            message: 'Select a fabric type:',
+            buttons: dialogButtons
+        });
+    }
+
+    // [NEW] Handler for long-pressing a single TYPE cell
+    handleTypeCellLongPress({ rowIndex }) {
+        const item = this.quoteService.getItems()[rowIndex];
+        if (!item || (!item.width && !item.height)) {
+            this.eventAggregator.publish('showNotification', { message: 'Cannot set type for an empty row.', type: 'error' });
+            return;
+        }
+        this._showFabricTypeDialog((newType) => {
+            return this.quoteService.setItemType(rowIndex, newType);
+        });
+    }
+
+    // [NEW] Handler for long-pressing the main Type button on the virtual keyboard
+    handleTypeButtonLongPress() {
+        this._showFabricTypeDialog((newType) => {
+            return this.quoteService.batchUpdateFabricType(newType);
+        });
     }
 
     handleCalculateAndSum() {

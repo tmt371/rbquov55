@@ -43,6 +43,10 @@ export class AppController {
         this.eventAggregator.subscribe('userRequestedCalculateAndSum', () => delegate('handleCalculateAndSum'));
         this.eventAggregator.subscribe('userRequestedMultiDeleteMode', () => delegate('handleToggleMultiDeleteMode'));
         this.eventAggregator.subscribe('userChoseSaveThenLoad', () => delegate('handleSaveThenLoad'));
+
+        // [NEW] Add subscriptions for the new long-press events
+        this.eventAggregator.subscribe('typeCellLongPressed', (data) => delegate('handleTypeCellLongPress', data));
+        this.eventAggregator.subscribe('typeButtonLongPressed', (data) => delegate('handleTypeButtonLongPress', data));
     }
 
     _subscribeDetailViewEvents() {
@@ -79,7 +83,6 @@ export class AppController {
         this.eventAggregator.subscribe('userToggledK3EditMode', () => delegate('handleToggleK3EditMode'));
         this.eventAggregator.subscribe('userRequestedBatchCycle', (data) => delegate('handleBatchCycle', data));
         
-        // [REFACTORED] Renamed events for semantic clarity
         this.eventAggregator.subscribe('dualChainModeChanged', (data) => delegate('handleDualChainModeChange', data));
         this.eventAggregator.subscribe('chainEnterPressed', (data) => delegate('handleChainEnterPressed', data));
         this.eventAggregator.subscribe('driveModeChanged', (data) => delegate('handleDriveModeChange', data));
@@ -132,7 +135,7 @@ export class AppController {
     _handleFileLoad({ fileName, content }) {
         const result = this.fileService.parseFileContent(fileName, content);
         if (result.success) {
-            this.quoteService.quoteData = result.data;
+            this.quoteData = result.data;
             this.uiService.reset(initialState.ui);
             this.uiService.setSumOutdated(true);
             this._publishStateChange();
