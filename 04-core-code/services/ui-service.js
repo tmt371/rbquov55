@@ -8,7 +8,6 @@ export class UIService {
     constructor(initialUIState) {
         this.state = JSON.parse(JSON.stringify(initialUIState));
         
-        // [REFACTORED] Renamed from isMultiDeleteMode to isMultiSelectMode
         this.state.isMultiSelectMode = false;
         this.state.multiSelectSelectedIndexes = new Set();
         this.state.locationInputValue = '';
@@ -53,7 +52,6 @@ export class UIService {
 
     reset(initialUIState) {
         this.state = JSON.parse(JSON.stringify(initialUIState));
-        // [REFACTORED] Renamed state variables
         this.state.isMultiSelectMode = false;
         this.state.multiSelectSelectedIndexes = new Set();
         this.state.locationInputValue = '';
@@ -99,7 +97,6 @@ export class UIService {
         this.state.selectedRowIndex = null;
     }
 
-    // [REFACTORED] Renamed method and logic to be generic
     toggleMultiSelectMode() {
         const isEnteringMode = !this.state.isMultiSelectMode;
         this.state.isMultiSelectMode = isEnteringMode;
@@ -114,13 +111,17 @@ export class UIService {
         return isEnteringMode;
     }
     
-    // [REFACTORED] Renamed method to be generic
     toggleMultiSelectSelection(rowIndex) {
         if (this.state.multiSelectSelectedIndexes.has(rowIndex)) {
             this.state.multiSelectSelectedIndexes.delete(rowIndex);
         } else {
             this.state.multiSelectSelectedIndexes.add(rowIndex);
         }
+    }
+
+    // [NEW] Clears the set of selected indexes.
+    clearMultiSelectSelection() {
+        this.state.multiSelectSelectedIndexes.clear();
     }
 
     setSumOutdated(isOutdated) {

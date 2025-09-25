@@ -186,6 +186,7 @@ export class QuickQuoteView {
         }
     }
 
+    // [REFACTORED] Updated to include a Cancel button
     _showFabricTypeDialog(callback, dialogTitle = 'Select a fabric type:') {
         const fabricTypes = this.configManager.getFabricTypeSequence();
         if (fabricTypes.length === 0) return;
@@ -200,6 +201,13 @@ export class QuickQuoteView {
                 }
             }
         }));
+        
+        // [NEW] Add a cancel button to the dialog configuration
+        dialogButtons.push({
+            text: 'Cancel',
+            className: 'secondary',
+            callback: () => {} // Does nothing
+        });
 
         this.eventAggregator.publish('showConfirmationDialog', {
             message: dialogTitle,
@@ -224,17 +232,14 @@ export class QuickQuoteView {
         }, 'Set fabric type for ALL rows:');
     }
 
-    // [NEW] Handler for the T-Set button click
     handleMultiTypeSet() {
         const { isMultiSelectMode, multiSelectSelectedIndexes } = this.uiService.getState();
 
-        // Validation 1: Must be in multi-select mode
         if (!isMultiSelectMode) {
             this.eventAggregator.publish('showNotification', { message: 'Please click M-Sel to enter multi-select mode first.', type: 'error' });
             return;
         }
 
-        // Validation 2: At least one item must be selected
         if (multiSelectSelectedIndexes.size === 0) {
             this.eventAggregator.publish('showNotification', { message: 'Please select one or more rows to set the fabric type.', type: 'error' });
             return;
@@ -242,7 +247,12 @@ export class QuickQuoteView {
 
         const title = `Set fabric type for ${multiSelectSelectedIndexes.size} selected rows:`;
         this._showFabricTypeDialog((newType) => {
-            return this.quoteService.batchUpdateFabricTypeForSelection(multiSelectSelectedIndexes, newType);
+            const changed = this.quoteService.batchUpdateFabricTypeForSelection(multiSelectSelectedIndexes, newType);
+            // [NEW] After applying, clear the current selection but remain in multi-select mode
+            if (changed) {
+                this.uiService.clearMultiSelectSelection();
+            }
+            return changed;
         }, title);
     }
 
