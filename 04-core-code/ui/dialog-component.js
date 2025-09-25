@@ -9,33 +9,33 @@ export class DialogComponent {
             throw new Error("Overlay element and event aggregator are required for DialogComponent.");
         }
         this.overlay = overlayElement;
+        this.dialogBox = this.overlay.querySelector('.dialog-box');
         this.eventAggregator = eventAggregator;
         
-        // Get generic container elements instead of specific buttons
         this.messageElement = this.overlay.querySelector('.dialog-message');
         this.buttonsContainer = this.overlay.querySelector('.dialog-buttons');
 
         this.initialize();
-        console.log("DialogComponent (Refactored as Generic) Initialized.");
+        console.log("DialogComponent (Refactored for Grid Layout) Initialized.");
     }
 
     initialize() {
-        // --- Keep old event for backward compatibility ---
+        // --- Keep old event for backward compatibility, but adapt to new grid format ---
         this.eventAggregator.subscribe('showLoadConfirmationDialog', () => {
             this.show({
                 message: 'The current quote contains unsaved data. What would you like to do?',
-                buttons: [
-                    { text: 'Save then Load', callback: () => this.eventAggregator.publish('userChoseSaveThenLoad') },
-                    { text: 'Load Directly', callback: () => this.eventAggregator.publish('userChoseLoadDirectly') },
-                    { text: 'Cancel', className: 'secondary', callback: () => {} }
+                layout: [ // Use the new layout format
+                    [
+                        { type: 'button', text: 'Save then Load', callback: () => this.eventAggregator.publish('userChoseSaveThenLoad'), colspan: 1 },
+                        { type: 'button', text: 'Load Directly', callback: () => this.eventAggregator.publish('userChoseLoadDirectly'), colspan: 1 },
+                        { type: 'button', text: 'Cancel', className: 'secondary', callback: () => {}, colspan: 1 }
+                    ]
                 ]
             });
         });
 
-        // --- Add new generic event subscription for confirmation dialogs ---
         this.eventAggregator.subscribe('showConfirmationDialog', (config) => this.show(config));
 
-        // Allow clicking the background overlay to also cancel/hide.
         this.overlay.addEventListener('click', (event) => {
             if (event.target === this.overlay) {
                 this.hide();
@@ -44,41 +44,64 @@ export class DialogComponent {
     }
 
     /**
-     * Shows a dialog with a configurable message and buttons.
+     * Shows a dialog with a configurable message and a grid-based layout.
      * @param {object} config - The configuration object.
      * @param {string} config.message - The message to display.
-     * @param {Array<object>} config.buttons - An array of button objects.
-     * @param {string} config.buttons[].text - The button's text.
-     * @param {string} [config.buttons[].className] - Optional CSS class for the button.
-     * @param {Function} config.buttons[].callback - The function to call on click.
+     * @param {Array<Array<object>>} config.layout - An array of rows, where each row is an array of cell objects.
      */
-    show({ message, buttons = [] }) {
-        // Clear previous buttons
+    show({ message, layout = [], position = 'center' }) {
         this.buttonsContainer.innerHTML = '';
 
-        // Set new message
         if (this.messageElement) {
             this.messageElement.textContent = message;
         }
 
-        // Create and append new buttons
-        buttons.forEach(btnConfig => {
-            const button = document.createElement('button');
-            button.className = 'dialog-button';
-            if (btnConfig.className) {
-                button.classList.add(btnConfig.className);
-            }
-            button.textContent = btnConfig.text;
-            
-            button.addEventListener('click', () => {
-                if (btnConfig.callback && typeof btnConfig.callback === 'function') {
-                    btnConfig.callback();
-                }
-                this.hide();
-            });
+        // [REFACTORED] Build the grid layout dynamically
+        layout.forEach(row => {
+            row.forEach(cellConfig => {
+                const cell = document.createElement('div');
+                cell.className = 'dialog-grid-cell';
 
-            this.buttonsContainer.appendChild(button);
+                if (cellConfig.type === 'button') {
+                    cell.classList.add('button-cell');
+                    const button = document.createElement('button');
+                    button.className = 'dialog-button';
+                    if (cellConfig.className) {
+                        button.classList.add(cellConfig.className);
+                    }
+                    button.textContent = cellConfig.text;
+                    
+                    button.addEventListener('click', () => {
+                        if (cellConfig.callback && typeof cellConfig.callback === 'function') {
+                            cellConfig.callback();
+                        }
+                        this.hide();
+                    });
+                    cell.appendChild(button);
+
+                } else if (cellConfig.type === 'text') {
+                    cell.classList.add('text-cell');
+                    cell.textContent = cellConfig.text;
+                }
+                
+                if (cellConfig.className) {
+                    cell.classList.add(cellConfig.className);
+                }
+
+                if (cellConfig.colspan) {
+                    cell.style.gridColumn = `span ${cellConfig.colspan}`;
+                }
+
+                this.buttonsContainer.appendChild(cell);
+            });
         });
+
+        // [NEW] Adjust dialog position based on config
+        if (position === 'bottomThird') {
+            this.dialogBox.style.marginTop = `calc( (100vh - 20vh) / 3 * 2 - 50% )`;
+        } else {
+            this.dialogBox.style.marginTop = ''; // Revert to default centered position
+        }
 
         this.overlay.classList.remove('is-hidden');
     }

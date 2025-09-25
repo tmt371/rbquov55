@@ -186,32 +186,31 @@ export class QuickQuoteView {
         }
     }
 
-    // [REFACTORED] Updated to include a Cancel button
+    // [REFACTORED] Updated to generate a complex grid layout for the dialog
     _showFabricTypeDialog(callback, dialogTitle = 'Select a fabric type:') {
         const fabricTypes = this.configManager.getFabricTypeSequence();
         if (fabricTypes.length === 0) return;
 
-        const dialogButtons = fabricTypes.map(type => ({
-            text: type,
-            callback: () => {
-                const changed = callback(type);
-                if (changed) {
-                    this.uiService.setSumOutdated(true);
-                    this.publish();
-                }
-            }
-        }));
-        
-        // [NEW] Add a cancel button to the dialog configuration
-        dialogButtons.push({
-            text: 'Cancel',
-            className: 'secondary',
-            callback: () => {} // Does nothing
+        const layout = fabricTypes.map(type => {
+            const matrix = this.configManager.getPriceMatrix(type);
+            const name = matrix ? matrix.name : 'Unknown';
+
+            return [
+                { type: 'button', text: type, callback: () => callback(type), colspan: 1 },
+                { type: 'text', text: name, colspan: 2 }
+            ];
         });
+
+        // Add the final row for the cancel button
+        layout.push([
+            { type: 'text', text: '', colspan: 2 }, // Empty cells for spacing
+            { type: 'button', text: 'Cancel', className: 'secondary cancel-cell', callback: () => {}, colspan: 1 }
+        ]);
 
         this.eventAggregator.publish('showConfirmationDialog', {
             message: dialogTitle,
-            buttons: dialogButtons
+            layout: layout,
+            position: 'bottomThird' // Use the new position option
         });
     }
 
@@ -222,13 +221,23 @@ export class QuickQuoteView {
             return;
         }
         this._showFabricTypeDialog((newType) => {
-            return this.quoteService.setItemType(rowIndex, newType);
+            const changed = this.quoteService.setItemType(rowIndex, newType);
+            if (changed) {
+                this.uiService.setSumOutdated(true);
+                this.publish();
+            }
+            return changed;
         }, `Set fabric type for Row #${rowIndex + 1}:`);
     }
 
     handleTypeButtonLongPress() {
         this._showFabricTypeDialog((newType) => {
-            return this.quoteService.batchUpdateFabricType(newType);
+            const changed = this.quoteService.batchUpdateFabricType(newType);
+            if (changed) {
+                this.uiService.setSumOutdated(true);
+                this.publish();
+            }
+            return changed;
         }, 'Set fabric type for ALL rows:');
     }
 
@@ -248,9 +257,11 @@ export class QuickQuoteView {
         const title = `Set fabric type for ${multiSelectSelectedIndexes.size} selected rows:`;
         this._showFabricTypeDialog((newType) => {
             const changed = this.quoteService.batchUpdateFabricTypeForSelection(multiSelectSelectedIndexes, newType);
-            // [NEW] After applying, clear the current selection but remain in multi-select mode
             if (changed) {
-                this.uiService.clearMultiSelectSelection();
+                // [REFACTORED] After applying, exit multi-select mode completely.
+                this.uiService.toggleMultiSelectMode();
+                this.uiService.setSumOutdated(true);
+                this.publish(); // Publish after exiting the mode
             }
             return changed;
         }, title);

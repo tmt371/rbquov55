@@ -9,11 +9,13 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
     display: flex;
+    /* [REFACTORED] Changed alignment to allow for top-offset positioning */
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Align to the top */
     z-index: 10000;
     opacity: 1;
     transition: opacity 0.2s ease-in-out;
+    padding-top: 20vh; /* [NEW] Default top padding */
 }
 
 .dialog-overlay.is-hidden {
@@ -27,7 +29,9 @@
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     text-align: center;
-    max-width: 400px;
+    /* [NEW] Position the dialog box at the top 1/3rd of the viewport height */
+    margin-top: calc( (100vh - 20vh) / 3 * 2 - 50% );
+    max-width: 600px; /* [NEW] Increased max-width for the new layout */
     width: 90%;
 }
 
@@ -39,44 +43,56 @@
     color: #333;
 }
 
+/* [REFACTORED] Changed layout from flexbox to CSS Grid */
 .dialog-buttons {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr; /* Defines 3 columns for A, B, C */
+    gap: 10px 15px; /* Row and column gap */
+    align-items: center;
+}
+
+/* [NEW] Style for a grid cell that is just text */
+.dialog-grid-cell.text-cell {
+    text-align: left;
+    font-size: 0.9em;
+    color: #555;
+    padding: 0 10px;
+}
+
+/* [NEW] Style for a grid cell that holds a button */
+.dialog-grid-cell.button-cell {
+    grid-column: span 1; /* Default span */
+}
+
+/* [NEW] Specific cell styling for the cancel button in column C, row 7 */
+.dialog-grid-cell.cancel-cell {
+    grid-column-start: 3;
     display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .dialog-button {
+    width: 100%; /* Make buttons fill their grid cell */
     padding: 10px 20px;
-    border: none;
+    border: 1px solid #ccc; /* Added border for better definition */
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
     font-weight: bold;
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, border-color 0.2s;
+    background-color: #f0f0f0; /* Default button color */
+    color: #333;
 }
 
-.dialog-button:first-of-type {
-    background-color: #28a745;
-    color: white;
-}
-
-.dialog-button:first-of-type:hover {
-    background-color: #218838;
-}
-
-.dialog-button:nth-of-type(2) {
-    background-color: #007bff;
-    color: white;
-}
-
-.dialog-button:nth-of-type(2):hover {
-    background-color: #0069d9;
+.dialog-button:hover {
+    background-color: #e0e0e0;
+    border-color: #999;
 }
 
 .dialog-button.secondary {
     background-color: #6c757d;
     color: white;
+    border-color: #5a6268;
 }
 
 .dialog-button.secondary:hover {
