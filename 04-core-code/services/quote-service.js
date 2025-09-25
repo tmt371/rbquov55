@@ -234,7 +234,6 @@ export class QuoteService {
         return this.setItemType(rowIndex, nextType);
     }
 
-    // [NEW] Sets the fabric type for a single, specific item.
     setItemType(rowIndex, newType) {
         const item = this._getItems()[rowIndex];
         if (item && item.fabricType !== newType) {
@@ -245,7 +244,6 @@ export class QuoteService {
         return false;
     }
 
-    // [NEW] Sets the fabric type for all eligible items.
     batchUpdateFabricType(newType) {
         const items = this._getItems();
         let changed = false;
@@ -258,6 +256,24 @@ export class QuoteService {
                 }
             }
         });
+        return changed;
+    }
+
+    // [NEW] Sets the fabric type for a specific selection of items.
+    batchUpdateFabricTypeForSelection(selectedIndexes, newType) {
+        const items = this._getItems();
+        let changed = false;
+        for (const index of selectedIndexes) {
+            const item = items[index];
+            // Ensure item exists and is eligible (has dimensions)
+            if (item && item.width && item.height) {
+                if (item.fabricType !== newType) {
+                    item.fabricType = newType;
+                    item.linePrice = null;
+                    changed = true;
+                }
+            }
+        }
         return changed;
     }
 

@@ -17,9 +17,7 @@ export class QuickQuoteView {
         this.currentProduct = 'rollerBlind';
     }
 
-    // [REFACTORED] Renamed method to be generic
     handleToggleMultiSelectMode() {
-        // [REFACTORED] Updated to call the new generic method
         const isEnteringMode = this.uiService.toggleMultiSelectMode();
         if (!isEnteringMode) {
             this.focusService.focusFirstEmptyCell('width');
@@ -28,7 +26,6 @@ export class QuickQuoteView {
     }
 
     handleSequenceCellClick({ rowIndex }) {
-        // [REFACTORED] Updated to check the new 'isMultiSelectMode' state
         if (this.uiService.getState().isMultiSelectMode) {
             const items = this.quoteService.getItems();
             const item = items[rowIndex];
@@ -38,7 +35,6 @@ export class QuickQuoteView {
                 this.eventAggregator.publish('showNotification', { message: "Cannot select the final empty row.", type: 'error' });
                 return;
             }
-            // [REFACTORED] Updated to call the new generic method
             this.uiService.toggleMultiSelectSelection(rowIndex);
         } else {
             this.uiService.toggleRowSelection(rowIndex);
@@ -47,7 +43,6 @@ export class QuickQuoteView {
     }
 
     handleDeleteRow() {
-        // [REFACTORED] Updated to use the new generic state names
         const { isMultiSelectMode, multiSelectSelectedIndexes, selectedRowIndex } = this.uiService.getState();
         if (isMultiSelectMode) {
             if (multiSelectSelectedIndexes.size === 0) {
@@ -55,7 +50,6 @@ export class QuickQuoteView {
                 return;
             }
             this.quoteService.deleteMultipleRows(multiSelectSelectedIndexes);
-            // [REFACTORED] Updated to call the new generic method
             this.uiService.toggleMultiSelectMode();
             this.focusService.focusFirstEmptyCell('width');
         } else {
@@ -192,7 +186,7 @@ export class QuickQuoteView {
         }
     }
 
-    _showFabricTypeDialog(callback) {
+    _showFabricTypeDialog(callback, dialogTitle = 'Select a fabric type:') {
         const fabricTypes = this.configManager.getFabricTypeSequence();
         if (fabricTypes.length === 0) return;
 
@@ -208,7 +202,7 @@ export class QuickQuoteView {
         }));
 
         this.eventAggregator.publish('showConfirmationDialog', {
-            message: 'Select a fabric type:',
+            message: dialogTitle,
             buttons: dialogButtons
         });
     }
@@ -221,13 +215,35 @@ export class QuickQuoteView {
         }
         this._showFabricTypeDialog((newType) => {
             return this.quoteService.setItemType(rowIndex, newType);
-        });
+        }, `Set fabric type for Row #${rowIndex + 1}:`);
     }
 
     handleTypeButtonLongPress() {
         this._showFabricTypeDialog((newType) => {
             return this.quoteService.batchUpdateFabricType(newType);
-        });
+        }, 'Set fabric type for ALL rows:');
+    }
+
+    // [NEW] Handler for the T-Set button click
+    handleMultiTypeSet() {
+        const { isMultiSelectMode, multiSelectSelectedIndexes } = this.uiService.getState();
+
+        // Validation 1: Must be in multi-select mode
+        if (!isMultiSelectMode) {
+            this.eventAggregator.publish('showNotification', { message: 'Please click M-Sel to enter multi-select mode first.', type: 'error' });
+            return;
+        }
+
+        // Validation 2: At least one item must be selected
+        if (multiSelectSelectedIndexes.size === 0) {
+            this.eventAggregator.publish('showNotification', { message: 'Please select one or more rows to set the fabric type.', type: 'error' });
+            return;
+        }
+
+        const title = `Set fabric type for ${multiSelectSelectedIndexes.size} selected rows:`;
+        this._showFabricTypeDialog((newType) => {
+            return this.quoteService.batchUpdateFabricTypeForSelection(multiSelectSelectedIndexes, newType);
+        }, title);
     }
 
     handleCalculateAndSum() {

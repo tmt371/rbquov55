@@ -108,9 +108,10 @@ export class InputHandler {
         setupButton('key-save', 'userRequestedSave');
         setupButton('key-export', 'userRequestedExportCSV');
         setupButton('key-reset', 'userRequestedReset');
-        
-        // [REFACTORED] Updated to target the new button ID and publish a generic event name
         setupButton('key-m-sel', 'userToggledMultiSelectMode');
+
+        // [NEW] Added event listener for the new T-Set button
+        setupButton('key-t-set', 'userRequestedMultiTypeSet');
 
         const loadButton = document.getElementById('key-load');
         if (loadButton) {
