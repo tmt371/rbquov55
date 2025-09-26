@@ -206,8 +206,8 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    /* [BUG FIX] Removed min-width which caused overflow on mobile */
-    /* min-width: 120px; */ 
+    /* [NEW] Right-aligns the price value now that the label is gone */
+    justify-content: flex-end;
 }
 .k4-price-box .price-label {
     font-size: 0.8em;
