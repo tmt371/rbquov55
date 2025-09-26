@@ -11,7 +11,7 @@
 }
 #left-panel {
     position: fixed;
-    left: 0; /* [FIX] Set a default horizontal position */
+    left: 0;
     background-color: var(--k1-bg-color);
     border: 1px solid var(--panel-border-color);
     border-left: none;
@@ -61,7 +61,6 @@
 #k1-tab.active { background-color: var(--k1-bg-color); border-color: var(--tab-active-color); color: var(--tab-active-color); }
 #k2-tab.active { background-color: var(--k2-bg-color); border-color: var(--tab-active-color); color: var(--tab-active-color);}
 #k3-tab.active { background-color: var(--k3-bg-color); border-color: var(--tab-active-color); color: #2c3e50; }
-/* [SWAPPED] K4 and K5 colors are swapped to match their new content */
 #k4-tab.active { background-color: var(--k5-bg-color); border-color: var(--tab-active-color); color: #2c3e50; }
 #k5-tab.active { background-color: var(--k4-bg-color); border-color: var(--tab-active-color); color: #2c3e50; }
 .tab-content-container { flex-grow: 1; padding: 15px; overflow-y: auto; }
@@ -191,15 +190,6 @@
 }
 
 /* --- K4 Panel Styles --- */
-.k4-top-row {
-    display: flex;
-    justify-content: flex-end;
-}
-.k4-bottom-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
 #k4-input-display {
     width: 150px;
     text-align: right;
@@ -216,7 +206,8 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-    min-width: 120px;
+    /* [BUG FIX] Removed min-width which caused overflow on mobile */
+    /* min-width: 120px; */ 
 }
 .k4-price-box .price-label {
     font-size: 0.8em;
@@ -232,7 +223,7 @@
     background-color: #cffde1;
 }
 
-/* --- [MODIFIED] K5 Panel is now K4 Panel --- */
+/* --- K4 Panel (formerly K5) Styles --- */
 #k4-content .feature-buttons {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -260,17 +251,17 @@
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 8px;
-    align-items: center; /* Vertically align all items */
+    align-items: center;
 }
 .k5-total-label {
-    grid-column: 1 / 2; /* Place in column 1 */
+    grid-column: 1 / 2;
     font-weight: bold;
     font-size: 1.1em;
     color: #2c3e50;
     text-align: center;
 }
 .k5-total-display {
-    grid-column: 2 / 3; /* Place in column 2 */
+    grid-column: 2 / 3;
     font-size: 1.2em;
     font-weight: bold;
     color: #ec4899;
@@ -279,13 +270,13 @@
     background-color: #fff;
 }
 #k5-counter-remote {
-    grid-column: 3 / 4; /* Place in column 3 */
+    grid-column: 3 / 4;
 }
 #k5-counter-charger {
-    grid-column: 4 / 5; /* Place in column 4 */
+    grid-column: 4 / 5;
 }
 #k5-counter-cord {
-    grid-column: 5 / 6; /* Place in column 5 */
+    grid-column: 5 / 6;
 }
 .k5-counter-group {
     display: flex;
@@ -318,19 +309,19 @@
     background-color: #fff;
 }
 
-/* --- K5 Feature Styles for Main Table (Now for K4's content) --- */
+/* --- K4 Main Table Cell Styles --- */
 .results-table td.winder-cell-active,
 .results-table td.motor-cell-active {
-    background-color: #fffacd; /* Light Yellow */
+    background-color: #fffacd;
     font-weight: bold;
 }
 
-/* --- [REFACTORED] K5 Grid Layout Styles --- */
+/* --- K5 Panel (formerly K4) Styles --- */
 .k5-grid-layout {
     display: flex;
     flex-direction: column;
-    gap: 5px; /* [MODIFIED] Task 2: Row spacing reduced by 50% from 10px */
-    font-size: 0.8em; /* [MODIFIED] Task 1: Font size reduced to 80% for all children */
+    gap: 5px;
+    font-size: 0.8em;
 }
 
 .k5-grid-row {
@@ -340,7 +331,7 @@
 }
 
 .k5-grid-group {
-    border: 1px solid #333; /* Thin black border */
+    border: 1px solid #333;
     border-radius: 4px;
     padding: 8px;
     display: flex;
@@ -348,33 +339,16 @@
     gap: 8px;
 }
 
-/* [REMOVED] Removed fixed-width rules for specific cells below */
-.k5-grid-cell-a,
-.k5-grid-cell-c {
-    /* flex-basis: 100px; */ /* Removed */
-    /* flex-shrink: 0; */   /* Removed */
+.k5-grid-group > div {
+    flex: 1;
+    min-width: 0;
 }
-.k5-grid-cell-b,
-.k5-grid-cell-d {
-    /* flex-grow: 1; */ /* Removed in favor of the new generic rule */
-}
+
 .k5-grid-cell-label {
-    /* flex-basis: 100px; */ /* Removed */
-    /* flex-shrink: 0; */   /* Removed */
     font-weight: bold;
     text-align: center;
-    font-size: 1em; /* Adjusted to inherit the new 0.8em base correctly */
+    font-size: 1em;
 }
-.k5-grid-cell-display {
-    /* flex-grow: 1; */ /* Removed in favor of the new generic rule */
-}
-
-/* [NEW] Task 1: New generic rule to make all direct div children of a group have equal width */
-.k5-grid-group > div {
-    flex: 1; /* This shorthand ensures items grow and shrink equally from a base of 0 */
-    min-width: 0; /* Important for preventing overflow with long content */
-}
-
 
 .k5-summary-display-box {
     text-align: right;
@@ -398,13 +372,12 @@
     box-sizing: border-box;
 }
 
-/* [NEW] Styles for K5 Total group */
 .k5-grid-group-total {
-    border: 1px solid #c0392b; /* Thin red border */
+    border: 1px solid #c0392b;
 }
 
 .k5-summary-total-box {
     font-size: 1.1em;
-    color: #c0392b; /* Red text color */
+    color: #c0392b;
     background-color: #fff;
 }
