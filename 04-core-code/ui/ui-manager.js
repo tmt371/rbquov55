@@ -48,7 +48,6 @@ export class UIManager {
         });
 
         this.initialize();
-        // [REINSTATED] Restore the initialization for the dynamic JS-based layout.
         this._initializeLeftPanelLayout();
     }
 
@@ -69,41 +68,40 @@ export class UIManager {
         this._scrollToActiveCell(state);
     }
 
-    // [REINSTATED & REFACTORED] This method is restored but now ONLY handles vertical positioning (top and height).
-    // Horizontal positioning (left and width) is now handled by CSS.
+    // [BUG FIX] This method is reinstated with robust logic that is independent of the keyboard's collapsed state.
     _adjustLeftPanelLayout() {
+        const appContainer = this.appElement;
         const numericKeyboard = this.numericKeyboardPanel;
         const leftPanel = this.leftPanelElement;
 
-        if (!numericKeyboard || !leftPanel) return;
-        
-        // Use a stable element on the keyboard for measurement that is always present.
-        const key7 = document.getElementById('key-7');
-        if (!key7) return;
+        if (!appContainer || !numericKeyboard || !leftPanel) return;
 
-        // --- Height and Top Position Calculation ---
-        const key7Rect = key7.getBoundingClientRect();
-        const keyboardPanelRect = numericKeyboard.getBoundingClientRect();
-
-        // If keyboard is collapsed, key7Rect.top will be 0. We need a stable reference.
-        // The stable reference is the keyboard panel's top position.
-        const topPosition = keyboardPanelRect.top;
-
-        // Calculate height based on key size, but only if visible.
+        // 1. Calculate and cache the correct height ONCE when the keyboard is visible.
         if (this.cachedLeftPanelHeight === 0 && !numericKeyboard.classList.contains('is-collapsed')) {
-             const keyHeight = key7Rect.height;
-             const gap = 5;
-             this.cachedLeftPanelHeight = (keyHeight * 4) + (gap * 3);
+            const key7 = document.getElementById('key-7');
+            if (key7) {
+                const key7Rect = key7.getBoundingClientRect();
+                const keyHeight = key7Rect.height;
+                const gap = 5;
+                this.cachedLeftPanelHeight = (keyHeight * 4) + (gap * 3);
+            }
         }
-        
-        const panelHeight = this.cachedLeftPanelHeight || 155; // Use fallback
+        // Use a fallback height if cache is still 0 (e.g., panel opened before first render)
+        const panelHeight = this.cachedLeftPanelHeight || 155; 
 
-        // Apply the calculated vertical styles.
-        leftPanel.style.top = topPosition + 'px';
+        // 2. Calculate the keyboard's logical expanded height and its top position, anchored to the app container's bottom.
+        const containerRect = appContainer.getBoundingClientRect();
+        const keyboardTopPadding = 38; // As defined in virtual-keyboard.css
+        const keyboardBottomPadding = 8;
+        const keyboardExpandedHeight = panelHeight + keyboardTopPadding + keyboardBottomPadding;
+        const keyboardLogicalTop = containerRect.bottom - keyboardExpandedHeight;
+        
+        // 3. Set the left panel's vertical position based on these stable, calculated values.
+        leftPanel.style.top = keyboardLogicalTop + 'px';
         leftPanel.style.height = panelHeight + 'px';
     }
 
-    // [REINSTATED] Restore the initialization logic.
+    // [REINSTATED] Restore the initialization logic to trigger layout adjustments.
     _initializeLeftPanelLayout() {
         const resizeObserver = new ResizeObserver(() => {
             if (this.leftPanelElement.classList.contains('is-expanded')) {
@@ -112,8 +110,7 @@ export class UIManager {
         });
         resizeObserver.observe(this.appElement);
         
-        // Initial adjustment might be needed, or on first open.
-        // A MutationObserver could also work to detect class changes on the keyboard.
+        // Also adjust when the keyboard state changes.
         new MutationObserver(() => {
             if(this.leftPanelElement.classList.contains('is-expanded')) {
                  this._adjustLeftPanelLayout();
@@ -121,14 +118,14 @@ export class UIManager {
         }).observe(this.numericKeyboardPanel, { attributes: true, attributeFilter: ['class'] });
     }
     
-    // [REFACTORED] Restore the call to the layout adjustment method.
     _updateLeftPanelState(currentView) {
         if (this.leftPanelElement) {
             const isExpanded = (currentView === 'DETAIL_CONFIG');
             this.leftPanelElement.classList.toggle('is-expanded', isExpanded);
 
             if (isExpanded) {
-                this._adjustLeftPanelLayout();
+                // Ensure layout is correct on first open
+                setTimeout(() => this._adjustLeftPanelLayout(), 0);
             }
         }
     }
