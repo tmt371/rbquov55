@@ -178,15 +178,26 @@ export class QuickQuoteView {
         this.publish();
     }
     
+    // [BUG FIX] Restored the correct batch cycle logic.
     handleCycleType() {
-        const changed = this.quoteService.batchUpdateFabricType(null);
+        const items = this.quoteService.getItems();
+        const eligibleItems = items.filter(item => item.width && item.height);
+        if (eligibleItems.length === 0) return;
+        
+        const TYPE_SEQUENCE = this.configManager.getFabricTypeSequence();
+        if (TYPE_SEQUENCE.length === 0) return;
+
+        const firstType = eligibleItems[0].fabricType || TYPE_SEQUENCE[TYPE_SEQUENCE.length - 1];
+        const currentIndex = TYPE_SEQUENCE.indexOf(firstType);
+        const nextType = TYPE_SEQUENCE[(currentIndex + 1) % TYPE_SEQUENCE.length];
+        
+        const changed = this.quoteService.batchUpdateFabricType(nextType);
         if (changed) {
             this.uiService.setSumOutdated(true);
             this.publish();
         }
     }
 
-    // [REFACTORED] Updated to generate a complex grid layout for the dialog
     _showFabricTypeDialog(callback, dialogTitle = 'Select a fabric type:') {
         const fabricTypes = this.configManager.getFabricTypeSequence();
         if (fabricTypes.length === 0) return;
@@ -201,16 +212,15 @@ export class QuickQuoteView {
             ];
         });
 
-        // Add the final row for the cancel button
         layout.push([
-            { type: 'text', text: '', colspan: 2 }, // Empty cells for spacing
+            { type: 'text', text: '', colspan: 2 },
             { type: 'button', text: 'Cancel', className: 'secondary cancel-cell', callback: () => {}, colspan: 1 }
         ]);
 
         this.eventAggregator.publish('showConfirmationDialog', {
             message: dialogTitle,
             layout: layout,
-            position: 'bottomThird' // Use the new position option
+            position: 'bottomThird'
         });
     }
 
@@ -258,10 +268,9 @@ export class QuickQuoteView {
         this._showFabricTypeDialog((newType) => {
             const changed = this.quoteService.batchUpdateFabricTypeForSelection(multiSelectSelectedIndexes, newType);
             if (changed) {
-                // [REFACTORED] After applying, exit multi-select mode completely.
                 this.uiService.toggleMultiSelectMode();
                 this.uiService.setSumOutdated(true);
-                this.publish(); // Publish after exiting the mode
+                this.publish();
             }
             return changed;
         }, title);
