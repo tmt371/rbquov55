@@ -11,16 +11,12 @@
 }
 #left-panel {
     position: fixed;
-<<<<<<< Updated upstream
-    left: 0;
-=======
     /* [REFACTORED] Set a fixed width now that JS is no longer calculating it. */
     width: 400px; 
     /* [REFACTORED] Ensure top, bottom, and left are set for a stable CSS-only animation. */
     top: 0;
     bottom: 0;
     left: 0; 
->>>>>>> Stashed changes
     background-color: var(--k1-bg-color);
     border: 1px solid var(--panel-border-color);
     border-left: none;
@@ -215,10 +211,6 @@
     display: flex;
     align-items: baseline;
     gap: 8px;
-<<<<<<< Updated upstream
-    /* [NEW] Right-aligns the price value now that the label is gone */
-=======
->>>>>>> Stashed changes
     justify-content: flex-end;
 }
 .k4-price-box .price-label {
