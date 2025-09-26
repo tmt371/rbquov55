@@ -9,13 +9,12 @@
     height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
     display: flex;
-    /* [REFACTORED] Changed alignment to allow for top-offset positioning */
     justify-content: center;
-    align-items: flex-start; /* Align to the top */
+    align-items: flex-start; 
     z-index: 10000;
     opacity: 1;
     transition: opacity 0.2s ease-in-out;
-    padding-top: 20vh; /* [NEW] Default top padding */
+    padding-top: 20vh;
 }
 
 .dialog-overlay.is-hidden {
@@ -25,46 +24,46 @@
 
 .dialog-box {
     background-color: white;
-    padding: 25px;
+    /* [REFACTORED] Reduced padding for a more compact layout */
+    padding: 20px;
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
     text-align: center;
-    /* [NEW] Position the dialog box at the top 1/3rd of the viewport height */
-    margin-top: calc( (100vh - 20vh) / 3 * 2 - 50% );
-    max-width: 600px; /* [NEW] Increased max-width for the new layout */
+    /* [REFACTORED] Adjusted margin-top to move the dialog up by approx 20px */
+    margin-top: calc( (100vh - 20vh) / 3 * 2 - 50% - 20px );
+    max-width: 600px;
     width: 90%;
+    /* [NEW] Reduced base font size for all elements inside the dialog */
+    font-size: 85%;
 }
 
 .dialog-message {
     margin-top: 0;
-    margin-bottom: 20px;
+    margin-bottom: 15px; /* Reduced margin */
     font-size: 1.1em;
     line-height: 1.5;
     color: #333;
 }
 
-/* [REFACTORED] Changed layout from flexbox to CSS Grid */
 .dialog-buttons {
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr; /* Defines 3 columns for A, B, C */
-    gap: 10px 15px; /* Row and column gap */
+    grid-template-columns: 1fr 2fr 1fr;
+    /* [REFACTORED] Reduced row and column gap by 70% */
+    gap: 3px 10px; 
     align-items: center;
 }
 
-/* [NEW] Style for a grid cell that is just text */
 .dialog-grid-cell.text-cell {
     text-align: left;
     font-size: 0.9em;
     color: #555;
-    padding: 0 10px;
+    padding: 0 5px; /* Reduced padding */
 }
 
-/* [NEW] Style for a grid cell that holds a button */
 .dialog-grid-cell.button-cell {
-    grid-column: span 1; /* Default span */
+    grid-column: span 1;
 }
 
-/* [NEW] Specific cell styling for the cancel button in column C, row 7 */
 .dialog-grid-cell.cancel-cell {
     grid-column-start: 3;
     display: flex;
@@ -72,15 +71,16 @@
 }
 
 .dialog-button {
-    width: 100%; /* Make buttons fill their grid cell */
-    padding: 10px 20px;
-    border: 1px solid #ccc; /* Added border for better definition */
+    width: 100%;
+    /* [REFACTORED] Reduced padding */
+    padding: 8px 10px; 
+    border: 1px solid #ccc;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
     font-weight: bold;
     transition: background-color 0.2s, border-color 0.2s;
-    background-color: #f0f0f0; /* Default button color */
+    background-color: #f0f0f0;
     color: #333;
 }
 
@@ -97,4 +97,18 @@
 
 .dialog-button.secondary:hover {
     background-color: #5a6268;
+}
+
+/* [NEW] Media query specifically for smaller screens to further tighten the layout */
+@media (max-height: 700px) {
+    .dialog-box {
+        padding: 15px;
+    }
+    .dialog-buttons {
+        gap: 2px 8px;
+    }
+    .dialog-button {
+        padding: 6px 8px;
+        font-size: 0.9em;
+    }
 }
