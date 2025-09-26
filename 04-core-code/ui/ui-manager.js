@@ -12,7 +12,6 @@ export class UIManager {
         this.appElement = appElement;
         this.eventAggregator = eventAggregator;
 
-        // [REFACTORED] Updated element ID from 'key-f5' to 'key-m-sel' and property name
         this.numericKeyboardPanel = document.getElementById('numeric-keyboard-panel');
         this.insertButton = document.getElementById('key-insert');
         this.deleteButton = document.getElementById('key-delete');
@@ -20,7 +19,8 @@ export class UIManager {
         this.clearButton = document.getElementById('key-clear');
         this.leftPanelElement = document.getElementById('left-panel');
         
-        this.cachedLeftPanelHeight = 0;
+        // [REMOVED] The cached height is no longer needed with the new CSS-based approach.
+        // this.cachedLeftPanelHeight = 0;
 
         const tableElement = document.getElementById('results-table');
         this.tableComponent = new TableComponent(tableElement);
@@ -49,7 +49,8 @@ export class UIManager {
         });
 
         this.initialize();
-        this._initializeLeftPanelLayout();
+        // [REMOVED] No longer need to initialize a dynamic JS-based layout for the left panel.
+        // this._initializeLeftPanelLayout();
     }
 
     initialize() {
@@ -69,64 +70,27 @@ export class UIManager {
         this._scrollToActiveCell(state);
     }
 
-    _adjustLeftPanelLayout() {
-        const appContainer = this.appElement;
-        const numericKeyboard = this.numericKeyboardPanel;
-        const leftPanel = this.leftPanelElement;
+    // [REMOVED] This entire method is no longer needed. The layout and positioning
+    // of the left panel will be handled purely by CSS, just like the right panel.
+    /*
+    _adjustLeftPanelLayout() { ... }
+    */
 
-        if (!appContainer || !numericKeyboard || !leftPanel) return;
-        
-        const containerRect = appContainer.getBoundingClientRect();
-        
-        const rightPageMargin = 40;
-        leftPanel.style.left = containerRect.left + 'px';
-        const newWidth = containerRect.width - rightPageMargin;
-        leftPanel.style.width = newWidth + 'px';
-
-        if (this.cachedLeftPanelHeight === 0 && !numericKeyboard.classList.contains('is-collapsed')) {
-            const key7 = document.getElementById('key-7');
-            if (key7) {
-                const key7Rect = key7.getBoundingClientRect();
-                const keyHeight = key7Rect.height;
-                const gap = 5;
-                this.cachedLeftPanelHeight = (keyHeight * 4) + (gap * 3);
-            }
-        }
-        const panelHeight = this.cachedLeftPanelHeight || 155; 
-
-        const keyboardTopPadding = 38;
-        const keyboardBottomPadding = 8;
-        const keyboardExpandedHeight = panelHeight + keyboardTopPadding + keyboardBottomPadding;
-        const keyboardLogicalTop = containerRect.bottom - keyboardExpandedHeight;
-        
-        leftPanel.style.top = (keyboardLogicalTop + keyboardTopPadding) + 'px';
-        leftPanel.style.height = panelHeight + 'px';
-    }
-
-    _initializeLeftPanelLayout() {
-        const resizeObserver = new ResizeObserver(() => {
-            if (this.leftPanelElement.classList.contains('is-expanded')) {
-                this._adjustLeftPanelLayout();
-            }
-        });
-        resizeObserver.observe(this.appElement);
-        
-        this._adjustLeftPanelLayout();
-    }
+    // [REMOVED] This method is also no longer needed as the JS layout logic is gone.
+    /*
+    _initializeLeftPanelLayout() { ... }
+    */
     
+    // [REFACTORED] Simplified this method to only toggle the '.is-expanded' class.
+    // All inline style manipulations have been removed.
     _updateLeftPanelState(currentView) {
         if (this.leftPanelElement) {
             const isExpanded = (currentView === 'DETAIL_CONFIG');
             this.leftPanelElement.classList.toggle('is-expanded', isExpanded);
-
-            if (isExpanded) {
-                this._adjustLeftPanelLayout();
-            }
         }
     }
 
     _updateButtonStates(state) {
-        // [REFACTORED] Updated to use new generic state names
         const { selectedRowIndex, isMultiSelectMode, multiSelectSelectedIndexes } = state.ui;
         const items = state.quoteData.rollerBlindItems;
         const isSingleRowSelected = selectedRowIndex !== null;
@@ -143,7 +107,6 @@ export class UIManager {
         if (this.insertButton) this.insertButton.disabled = insertDisabled;
 
         let deleteDisabled = true;
-        // [REFACTORED] Updated to check new 'isMultiSelectMode' state
         if (isMultiSelectMode) {
             if (multiSelectSelectedIndexes.size > 0) { deleteDisabled = false; }
         } else if (isSingleRowSelected) {
@@ -154,7 +117,6 @@ export class UIManager {
         }
         if (this.deleteButton) this.deleteButton.disabled = deleteDisabled;
         
-        // [REFACTORED] Updated to check new 'isMultiSelectMode' state and use new button property
         const mSelDisabled = !isSingleRowSelected && !isMultiSelectMode;
         if (this.mSelButton) {
             this.mSelButton.disabled = mSelDisabled;
