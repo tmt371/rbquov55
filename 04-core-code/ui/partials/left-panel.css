@@ -11,6 +11,7 @@
 }
 #left-panel {
     position: fixed;
+    /* [REFACTORED] Retain fixed width and left position for stable horizontal behavior. */
     width: 400px; 
     left: 0; 
     /* [REFACTORED] Removed top and bottom properties. The panel's vertical position and height
