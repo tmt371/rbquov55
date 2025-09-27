@@ -68,59 +68,35 @@ export class UIManager {
         this._scrollToActiveCell(state);
     }
 
-    // [DEBUG] Added extensive console.log statements for debugging
     _adjustLeftPanelLayout() {
-        console.log("=============================================");
-        console.log(`[DEBUG] Firing _adjustLeftPanelLayout at: ${new Date().toLocaleTimeString()}`);
-
         const appContainer = this.appElement;
         const numericKeyboard = this.numericKeyboardPanel;
         const leftPanel = this.leftPanelElement;
 
-        if (!appContainer || !numericKeyboard || !leftPanel) {
-            console.error("[DEBUG] A required element was not found. Aborting layout adjustment.");
-            return;
-        }
-
-        const isKeyboardCollapsed = numericKeyboard.classList.contains('is-collapsed');
-        console.log(`[DEBUG] Is numeric keyboard collapsed? ${isKeyboardCollapsed}`);
+        if (!appContainer || !numericKeyboard || !leftPanel) return;
 
         // --- Height Calculation ---
-        console.log(`[DEBUG] Cached panel height (before calculation): ${this.cachedLeftPanelHeight}`);
-        if (this.cachedLeftPanelHeight === 0 && !isKeyboardCollapsed) {
+        if (this.cachedLeftPanelHeight === 0 && !numericKeyboard.classList.contains('is-collapsed')) {
             const key7 = document.getElementById('key-7');
             if (key7) {
                 const key7Rect = key7.getBoundingClientRect();
-                console.log("[DEBUG] 'key-7' Rect:", JSON.stringify(key7Rect));
                 const keyHeight = key7Rect.height;
                 const gap = 5;
                 this.cachedLeftPanelHeight = (keyHeight * 4) + (gap * 3);
-                console.log(`[DEBUG] New cached height calculated: ${this.cachedLeftPanelHeight}`);
             }
         }
         const panelHeight = this.cachedLeftPanelHeight || 155;
-        console.log(`[DEBUG] Final panel height to be used: ${panelHeight}`);
 
         // --- Top Position Calculation ---
         const containerRect = appContainer.getBoundingClientRect();
-        console.log("[DEBUG] App container Rect:", JSON.stringify(containerRect));
         const keyboardTopPadding = 38;
         const keyboardBottomPadding = 8;
         const keyboardExpandedHeight = panelHeight + keyboardTopPadding + keyboardBottomPadding;
-        console.log(`[DEBUG] Calculated expanded keyboard height: ${keyboardExpandedHeight}`);
-        
         const keyboardLogicalTop = containerRect.bottom - keyboardExpandedHeight;
-        console.log(`[DEBUG] Calculated logical keyboard top: ${keyboardLogicalTop} (container.bottom - expandedHeight)`);
         
         // --- Apply ONLY Vertical Styles ---
-        const finalTop = keyboardLogicalTop + 'px';
-        const finalHeight = panelHeight + 'px';
-        
-        leftPanel.style.top = finalTop;
-        leftPanel.style.height = finalHeight;
-
-        console.log(`[DEBUG] FINAL APPLIED STYLE -> top: ${finalTop}, height: ${finalHeight}`);
-        console.log("=============================================");
+        leftPanel.style.top = keyboardLogicalTop + 'px';
+        leftPanel.style.height = panelHeight + 'px';
     }
 
     _initializeLeftPanelLayout() {
@@ -136,6 +112,11 @@ export class UIManager {
                  this._adjustLeftPanelLayout();
             }
         }).observe(this.numericKeyboardPanel, { attributes: true, attributeFilter: ['class'] });
+
+        // [BUG FIX] Add a direct call on initialization to ensure the panel is
+        // correctly positioned on page load, before any user interaction.
+        // Use setTimeout to ensure the main thread is free and DOM is fully ready for measurement.
+        setTimeout(() => this._adjustLeftPanelLayout(), 0);
     }
     
     _updateLeftPanelState(currentView) {
