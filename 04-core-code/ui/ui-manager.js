@@ -68,41 +68,59 @@ export class UIManager {
         this._scrollToActiveCell(state);
     }
 
-    // [BUG FIX] This is the definitive, robust logic for left panel positioning.
+    // [DEBUG] Added extensive console.log statements for debugging
     _adjustLeftPanelLayout() {
+        console.log("=============================================");
+        console.log(`[DEBUG] Firing _adjustLeftPanelLayout at: ${new Date().toLocaleTimeString()}`);
+
         const appContainer = this.appElement;
         const numericKeyboard = this.numericKeyboardPanel;
         const leftPanel = this.leftPanelElement;
 
-        if (!appContainer || !numericKeyboard || !leftPanel) return;
+        if (!appContainer || !numericKeyboard || !leftPanel) {
+            console.error("[DEBUG] A required element was not found. Aborting layout adjustment.");
+            return;
+        }
+
+        const isKeyboardCollapsed = numericKeyboard.classList.contains('is-collapsed');
+        console.log(`[DEBUG] Is numeric keyboard collapsed? ${isKeyboardCollapsed}`);
 
         // --- Height Calculation ---
-        // 1. Calculate and cache the correct panel height ONCE when the keyboard is visible
-        //    to avoid dependency on its state later.
-        if (this.cachedLeftPanelHeight === 0 && !numericKeyboard.classList.contains('is-collapsed')) {
+        console.log(`[DEBUG] Cached panel height (before calculation): ${this.cachedLeftPanelHeight}`);
+        if (this.cachedLeftPanelHeight === 0 && !isKeyboardCollapsed) {
             const key7 = document.getElementById('key-7');
             if (key7) {
                 const key7Rect = key7.getBoundingClientRect();
+                console.log("[DEBUG] 'key-7' Rect:", JSON.stringify(key7Rect));
                 const keyHeight = key7Rect.height;
-                const gap = 5; // As defined in virtual-keyboard.css
+                const gap = 5;
                 this.cachedLeftPanelHeight = (keyHeight * 4) + (gap * 3);
+                console.log(`[DEBUG] New cached height calculated: ${this.cachedLeftPanelHeight}`);
             }
         }
-        const panelHeight = this.cachedLeftPanelHeight || 155; // Use a reasonable fallback
+        const panelHeight = this.cachedLeftPanelHeight || 155;
+        console.log(`[DEBUG] Final panel height to be used: ${panelHeight}`);
 
         // --- Top Position Calculation ---
-        // 2. Calculate the keyboard's logical expanded height and its top position,
-        //    anchored to the app container's bottom for absolute stability.
         const containerRect = appContainer.getBoundingClientRect();
-        const keyboardTopPadding = 38; // As defined in virtual-keyboard.css
+        console.log("[DEBUG] App container Rect:", JSON.stringify(containerRect));
+        const keyboardTopPadding = 38;
         const keyboardBottomPadding = 8;
         const keyboardExpandedHeight = panelHeight + keyboardTopPadding + keyboardBottomPadding;
+        console.log(`[DEBUG] Calculated expanded keyboard height: ${keyboardExpandedHeight}`);
+        
         const keyboardLogicalTop = containerRect.bottom - keyboardExpandedHeight;
+        console.log(`[DEBUG] Calculated logical keyboard top: ${keyboardLogicalTop} (container.bottom - expandedHeight)`);
         
         // --- Apply ONLY Vertical Styles ---
-        // This ensures CSS remains the single source of truth for horizontal positioning.
-        leftPanel.style.top = keyboardLogicalTop + 'px';
-        leftPanel.style.height = panelHeight + 'px';
+        const finalTop = keyboardLogicalTop + 'px';
+        const finalHeight = panelHeight + 'px';
+        
+        leftPanel.style.top = finalTop;
+        leftPanel.style.height = finalHeight;
+
+        console.log(`[DEBUG] FINAL APPLIED STYLE -> top: ${finalTop}, height: ${finalHeight}`);
+        console.log("=============================================");
     }
 
     _initializeLeftPanelLayout() {
@@ -113,9 +131,8 @@ export class UIManager {
         });
         resizeObserver.observe(this.appElement);
         
-        // Adjust layout whenever the keyboard's collapsed state changes.
         new MutationObserver(() => {
-            if (this.leftPanelElement.classList.contains('is-expanded')) {
+            if(this.leftPanelElement.classList.contains('is-expanded')) {
                  this._adjustLeftPanelLayout();
             }
         }).observe(this.numericKeyboardPanel, { attributes: true, attributeFilter: ['class'] });
@@ -127,7 +144,6 @@ export class UIManager {
             this.leftPanelElement.classList.toggle('is-expanded', isExpanded);
 
             if (isExpanded) {
-                // Use setTimeout to ensure the DOM has updated (e.g., class applied) before measuring.
                 setTimeout(() => this._adjustLeftPanelLayout(), 0);
             }
         }
